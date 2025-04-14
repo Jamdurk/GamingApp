@@ -33,3 +33,13 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# Active Storage files
+/storage/*
+!/storage/.keep
+
+# Test videos and large media
+test/fixtures/files/*.mp4
+test/fixtures/files/*.png
+tmp/*
+
