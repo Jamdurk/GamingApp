@@ -11,3 +11,9 @@ call_of_duty:
   game_name: MyString
   date_played: 2025-04-10
   players: MyText
+
+for_clips:
+  title: "For clips"
+  game_name: "Clips"
+  date_played: 2025-04-10
+  players: "Clip"

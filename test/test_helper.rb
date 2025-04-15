@@ -14,7 +14,15 @@ module ActiveSupport
 
     def attach_video(recording, filename: "test_attachment_check.mp4")
       recording.video.attach(
-        io: File.open(Rails.root.join("test", "fixtures", "files", filename)),
+        io: File.open(Rails.root.join("test", "fixtures", "files", "recording_videos", filename)),
+        filename: filename,
+        content_type: "video/mp4"
+      )
+    end
+
+    def attach_video_clip(clip, filename: "clip_test_generic.mp4")
+      clip.video.attach(
+        io: File.open(Rails.root.join("test", "fixtures", "files", "clip_videos", filename)),
         filename: filename,
         content_type: "video/mp4"
       )

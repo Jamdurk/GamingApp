@@ -39,7 +39,8 @@
 !/storage/.keep
 
 # Test videos and large media
-test/fixtures/files/*.mp4
-test/fixtures/files/*.png
+test/fixtures/files/recording_videos/*
+test/fixtures/files/clip_videos/*
 tmp/*
+
 
