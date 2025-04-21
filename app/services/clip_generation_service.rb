@@ -18,6 +18,19 @@ class ClipGenerationService
   # MAIN WORKFLOW
   # ──────────────────────────────────────────
   def call
+    # Guard-rail validations
+    if @recording.nil?
+      return Result.new(success?: false, error: "Recording must be present to make clip")
+    end
+
+    if @start_time.nil? || @start_time.empty?
+      return Result.new(success?: false, error: "Start time cannot be empty")
+    end
+
+    if @end_time.nil? || @end_time.empty?
+      return Result.new(success?: false, error: "End time cannot be empty")
+    end
+
     # 1.  Get a real file‑system path to the attached video blob.
     video_path = ActiveStorage::Blob
                    .service
@@ -32,11 +45,19 @@ class ClipGenerationService
 
     # 4.  Guard‑rail validations.
     if end_sec <= start_sec
-      return Result.new(success: false,
+      return Result.new(success?: false,
                         error:   "End time must be after start")
     elsif end_sec > movie.duration
-      return Result.new(success: false,
+      return Result.new(success?: false,
                         error:   "End time exceeds recording duration")
+    end
+
+    if @start_time.nil? || @start_time.empty?
+      return Result.new(success?: false, error: "Start time cannot be empty")
+    end
+
+    if @end_time.nil? || @end_time.empty?
+      return Result.new(success?: false, error: "End time cannot be empty")
     end
 
     # 5.  Pick a unique temp path for FFmpeg’s output slice.
@@ -85,11 +106,12 @@ class ClipGenerationService
 
   # Convert "HH:MM:SS" → seconds.
   def timestamp_to_seconds(ts)
-    ts.split(":")          # ["01","02","03"]
-      .map(&:to_i)         # [1,2,3]
-      .reverse             # [3,2,1]   (seconds, minutes, hours)
-      .each_with_index     # [[3,0],[2,1],[1,2]]
-      .sum { |v, idx| v * 60**idx }  # 3*60⁰ + 2*60¹ + 1*60²
+    parts = ts.split(":")                                # Split timestamp "00:00:05.5" into array ["00","00","05.5"]
+    parts[2] = parts[2].to_f                             # Convert seconds part to float to preserve decimals (5.5)
+    parts.map.with_index { |v, idx| idx == 2 ? v : v.to_i } # Convert hours and minutes to integers, keep seconds as float
+         .reverse                                        # Reverse to [5.5, 0, 0] (seconds, minutes, hours)
+         .each_with_index                                # Create pairs with indices: [[5.5,0], [0,1], [0,2]]
+         .sum { |v, idx| v * 60**idx }                   # Calculate: 5.5*60⁰ + 0*60¹ + 0*60² = 5.5 seconds
   end
 
   # Create an empty /tmp/clip_XXXX.mp4 and return its path.
