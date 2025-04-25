@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_10_071557) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_24_070112) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -58,7 +58,27 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_10_071557) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "segments", force: :cascade do |t|
+    t.float "start_time"
+    t.float "end_time"
+    t.text "text"
+    t.integer "transcript_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["transcript_id"], name: "index_segments_on_transcript_id"
+  end
+
+  create_table "transcripts", force: :cascade do |t|
+    t.integer "recording_id", null: false
+    t.json "data"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recording_id"], name: "index_transcripts_on_recording_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "clips", "recordings"
+  add_foreign_key "segments", "transcripts"
+  add_foreign_key "transcripts", "recordings"
 end
