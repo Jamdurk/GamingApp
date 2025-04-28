@@ -44,3 +44,4 @@ test/fixtures/files/clip_videos/*
 tmp/*
 
 
+whisper.cpp/
