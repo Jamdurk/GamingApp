@@ -1,0 +1,19 @@
+{
+    "transcription": [
+      {
+        "timestamps": {
+          "from": "00:00:01,000",
+          "to": "00:00:05,000"
+        },
+        "text": "Hello world"
+      },
+      {
+        "timestamps": {
+          "from": "00:00:06,000",
+          "to": "00:00:10,000"
+        },
+        "text": "Another segment"
+      }
+    ]
+  }
+  

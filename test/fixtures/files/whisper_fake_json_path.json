@@ -1,0 +1,19 @@
+{
+    "transcription": [
+      {
+        "text": "First line of speech",
+        "timestamps": {
+          "from": "00:00:01,000",
+          "to": "00:00:04,500"
+        }
+      },
+      {
+        "text": "Second line of speech",
+        "timestamps": {
+          "from": "00:00:05,000",
+          "to": "00:00:08,200"
+        }
+      }
+    ]
+  }
+  
