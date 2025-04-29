@@ -159,9 +159,5 @@ class TranscriptionServiceTest < ActiveSupport::TestCase # Heavily AI generated,
           TranscriptionService.call(recording: @transcript_service)
         end
       end
-      
-      
-    
-
 end
 
