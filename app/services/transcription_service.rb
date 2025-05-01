@@ -1,5 +1,6 @@
 require "open3"
 require "fileutils"
+include VideoUtils
 
 class TranscriptionService
   def self.call(recording:)
@@ -18,17 +19,6 @@ class TranscriptionService
   end
 
   private
-
-  def download_video
-    temp_file = Tempfile.new(['recording', '.mp4'])
-
-    @recording.video.open do |file|
-      FileUtils.cp(file.path, temp_file.path)
-    end
-
-    FileUtils.chmod(0644, temp_file.path)
-    temp_file.path
-  end
 
   def convert_to_wav(mp4_path)
     wav_path = mp4_path.sub(File.extname(mp4_path), ".wav")
@@ -77,36 +67,95 @@ class TranscriptionService
   
     json_path
   end
-  
 
   def parse_transcript(json_path)
     raw  = File.read(json_path)
     data = JSON.parse(raw)
-
-    segments = data["transcription"].map do |entry|
+  
+    raw_segments = data["transcription"].map do |entry|
       {
         "start" => timecode_to_seconds(entry.dig("timestamps", "from")),
         "end"   => timecode_to_seconds(entry.dig("timestamps", "to")),
-        "text"  => entry["text"]
+        "text"  => entry["text"].to_s.strip
       }
     end
+  
+    
+  
+    # Parameters to tweak
+    start_offset     = 0.2    # Delay subtitles by 0.2s to sync better
+    min_duration     = 1.0    # Show each subtitle for at least 1.0s
+    fade_gap_buffer  = 0.6    # Gap between end and next start, to avoid lingering
+  
+    # Adjusted segments with timing fixes
+    segments = raw_segments.each_with_index.map do |seg, i|
+      next if seg["text"].blank?
+  
+      start = seg["start"] + start_offset
+      start = [start, seg["end"] - 0.1].min # cap to not exceed end
+  
+      duration = [seg["end"] - seg["start"], min_duration].max
+      ending   = start + duration
+  
+      next_start = raw_segments[i + 1]&.dig("start")
+      if next_start
+        ending = [ending, next_start - fade_gap_buffer].min
+      end
+  
+      {
+        start_time: start.round(3),
+        end_time: ending.round(3),
+        text: seg["text"]
+      }
+    end.compact
 
+    raw_segments = deduplicate_segments(raw_segments)  
     transcript = @recording.transcript || @recording.create_transcript!(data: data)
     transcript.segments.destroy_all
-
+  
     segments.each do |seg|
-      next if seg["text"].blank?
-      transcript.segments.create!(
-        start_time: seg["start"],
-        end_time:   seg["end"],
-        text:       seg["text"]
-      )
+      transcript.segments.create!(seg)
     end
   end
+  
 
+
+ 
   def timecode_to_seconds(str)
     return 0.0 if str.blank?
     parts = str.gsub(",", ".").split(":").map(&:to_f)
     (parts[0] * 3600) + (parts[1] * 60) + parts[2]
   end
+
+  def deduplicate_segments(segments, max_repetitions=3)
+    result = []
+    current_text = nil
+    repetition_count = 0
+    
+    segments.each do |segment|
+      if segment[:text] == current_text
+        repetition_count += 1
+        # Skip if we've seen this text too many times in a row
+        next if repetition_count > max_repetitions
+      else
+        current_text = segment[:text]
+        repetition_count = 1
+      end
+      
+      result << segment
+    end
+    
+    result
+  end
+
+Result = Struct.new(:success?, :error, keyword_init: true)
+
+def success
+  Result.new(success?: true)
+end
+
+def failure(msg)
+  Result.new(success?: false, error: msg)
+end
+
 end

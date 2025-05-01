@@ -19,9 +19,9 @@ class TranscriptionServiceTest < ActiveSupport::TestCase # Heavily AI generated,
         result = TranscriptionService.call(recording: @transcript_service)
 
          assert_kind_of Array, result
-         assert result.first["start"]
-         assert result.first["end"]
-         assert result.first["text"]
+         assert result.first[:start_time]
+         assert result.first[:end_time]
+         assert result.first[:text]
     end
 
     test "run_whisper constructs proper command" do

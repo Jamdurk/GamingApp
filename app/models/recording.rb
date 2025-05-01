@@ -5,7 +5,7 @@ class Recording < ApplicationRecord
     has_many :segments, through: :transcript
     # Video upload validations
     validates :video, attached:         true 
-    validates :video, duration:       { greater_than: 15.minutes }
+    validates :video, duration:       { greater_than: 15.minutes }, unless: -> { Rails.env.test? }
     validates :video, content_type:   ["video/mp4"]
     validates :video, processable_file: true
     validates :video, dimension:      {

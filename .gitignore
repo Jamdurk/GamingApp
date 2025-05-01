@@ -45,3 +45,4 @@ tmp/*
 
 
 whisper.cpp/
+diarization-env/
