@@ -40,7 +40,7 @@ class TranscriptionService
   def run_whisper(input_path)
     base_name  = File.basename(input_path, File.extname(input_path))
     output_dir = "/tmp"
-    model_path = Rails.root.join("whisper.cpp", "models", "ggml-medium.en.bin").to_s
+    model_path = Rails.root.join("whisper.cpp", "models", "ggml-large-v2.bin").to_s
   
     unless File.exist?(input_path) && File.readable?(input_path)
       raise "Input file does not exist or is not readable: #{input_path}"
@@ -71,50 +71,25 @@ class TranscriptionService
   def parse_transcript(json_path)
     raw  = File.read(json_path)
     data = JSON.parse(raw)
-  
-    raw_segments = data["transcription"].map do |entry|
+
+    segments = data["transcription"].map do |entry|
       {
         "start" => timecode_to_seconds(entry.dig("timestamps", "from")),
         "end"   => timecode_to_seconds(entry.dig("timestamps", "to")),
-        "text"  => entry["text"].to_s.strip
+        "text"  => entry["text"]
       }
     end
-  
-    
-  
-    # Parameters to tweak
-    start_offset     = 0.2    # Delay subtitles by 0.2s to sync better
-    min_duration     = 1.0    # Show each subtitle for at least 1.0s
-    fade_gap_buffer  = 0.6    # Gap between end and next start, to avoid lingering
-  
-    # Adjusted segments with timing fixes
-    segments = raw_segments.each_with_index.map do |seg, i|
-      next if seg["text"].blank?
-  
-      start = seg["start"] + start_offset
-      start = [start, seg["end"] - 0.1].min # cap to not exceed end
-  
-      duration = [seg["end"] - seg["start"], min_duration].max
-      ending   = start + duration
-  
-      next_start = raw_segments[i + 1]&.dig("start")
-      if next_start
-        ending = [ending, next_start - fade_gap_buffer].min
-      end
-  
-      {
-        start_time: start.round(3),
-        end_time: ending.round(3),
-        text: seg["text"]
-      }
-    end.compact
 
-    raw_segments = deduplicate_segments(raw_segments)  
     transcript = @recording.transcript || @recording.create_transcript!(data: data)
     transcript.segments.destroy_all
-  
+
     segments.each do |seg|
-      transcript.segments.create!(seg)
+      next if seg["text"].blank?
+      transcript.segments.create!(
+        start_time: seg["start"],
+        end_time:   seg["end"],
+        text:       seg["text"]
+      )
     end
   end
   

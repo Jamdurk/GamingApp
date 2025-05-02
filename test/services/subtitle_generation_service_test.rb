@@ -41,11 +41,11 @@ class SubtitleGenerationServiceTest < ActiveSupport::TestCase
   
     expected = <<~SRT
       1
-      00:00:01,500 --> 00:00:04,200
+      00:00:01,700 --> 00:00:04,400
       Hello world
   
       2
-      00:00:05,000 --> 00:00:07,500
+      00:00:05,200 --> 00:00:07,700
       Welcome back!
     SRT
   

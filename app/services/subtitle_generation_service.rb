@@ -34,6 +34,13 @@ class SubtitleGenerationService
     srt_file = Tempfile.new(["subtitles_", ".srt"])
     segments = @recording.transcript.segments.order(:start_time)
 
+    # Add timing offset to all segments
+    offset = 0.2
+    segments.each do |segment| 
+      segment.start_time += offset
+      segment.end_time   += offset
+    end
+
     segments.each_with_index do |segment, index|
       srt_file.write "#{index + 1}\n"
       srt_file.write "#{format_time(segment.start_time)} --> #{format_time(segment.end_time)}\n"
@@ -51,25 +58,27 @@ class SubtitleGenerationService
   end
 
   def burn_subtitles(input_path, srt_path)
-    output_path = Tempfile.new(["burned_", ".mp4"]).path
+  output_path = Tempfile.new(["burned_", ".mp4"]).path
 
-    cmd = [
-      "ffmpeg",
-      "-y",
-      "-i", input_path,
-      "-vf", "subtitles=#{srt_path}",
-      "-c:v", "libx264",
-      "-preset", "ultrafast",
-      "-threads", "12",
-      "-c:a", "copy",
-      output_path
-    ]
-
-    stdout, stderr, status = Open3.capture3(*cmd)
-    raise "FFmpeg failed: #{stderr}" unless status.success?
-
+  cmd = [
+    "ffmpeg",
+    "-y",
+    "-i", input_path,
+    "-map", "0:v",   # Only take video from input
+    "-map", "0:a",   # Only take audio from input
+    "-vf", "subtitles=#{srt_path}",
+    "-c:v", "libx264",
+    "-preset", "ultrafast",
+    "-threads", "12",
+    "-c:a", "copy",
     output_path
-  end
+  ]
+
+  stdout, stderr, status = Open3.capture3(*cmd)
+  raise "FFmpeg failed: #{stderr}" unless status.success?
+
+  output_path
+end
 
   def replace_video(output_path)
     @recording.video.purge_later if @recording.video.attached?
