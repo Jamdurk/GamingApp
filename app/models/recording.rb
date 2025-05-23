@@ -16,5 +16,17 @@ class Recording < ApplicationRecord
     validates :title,     presence: true,  length: { maximum: 25 }, uniqueness: true
     validates :game_name, presence: true,  length: { maximum: 25 }
     validates :players,   presence: true,  length: { maximum: 50 } # Right now players is a single attribute, and the model here is contraining. Will need to add player model at some point
+
+
+    def show_processing_section?
+      transcript.nil? || transcript.created_at >= 3.hours.ago
+    end
   
+    def processing_message
+      if transcript.nil?
+        "Transcription in progress... please check back shortly."
+      else
+        "✅ Subtitled recording ready!"
+      end
+    end
 end

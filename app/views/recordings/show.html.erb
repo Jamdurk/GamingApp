@@ -1,0 +1,42 @@
+<h1><%= @recording.title %></h1>
+
+<p><strong>Game:</strong> <%= @recording.game_name.presence || "N/A" %></p>
+<p><strong>Players:</strong> <%= @recording.players.presence || "N/A" %></p>
+<p><strong>Date Played:</strong> <%= @recording.date_played ? @recording.date_played.strftime("%B %d, %Y") : "N/A" %></p>
+
+<hr>
+
+<% if @recording.show_processing_section? %>
+  <h2>Processing Status</h2>
+  <p class="<%= @recording.transcript.nil? ? 'status-waiting' : 'status-ready' %>">
+    <em><%= @recording.processing_message %></em>
+  </p>
+  <hr>
+<% end %>
+
+<h2>Full Recording</h2>
+<% if @recording.video.attached? %>
+  <%= video_tag @recording.video, controls: true, width: 640 %>
+<% else %>
+  <p>No video attached for this recording.</p>
+<% end %>
+
+<hr>
+
+<h2>Clips</h2>
+<% if @clips.any? %>
+  <ul>
+    <% @clips.each do |clip| %>
+      <li>
+        <h3><%= clip.title %></h3>
+        <% if clip.video.attached? %>
+          <%= video_tag clip.video, controls: true, width: 480 %>
+        <% else %>
+          <p>Clip video not available.</p>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No clips available for this recording yet.</p>
+<% end %>

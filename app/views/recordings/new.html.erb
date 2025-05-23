@@ -1,0 +1,42 @@
+<div class="recording-form-container">
+  <h1 class="recording-form-title"> Upload a New Recording</h1>
+
+  <%= form_with model: @recording, local: true, html: { multipart: true } do |f| %>
+    <div class="recording-form-group">
+      <%= f.label :title, "Title", class: "recording-form-label" %>
+      <%= f.text_field :title, class: "recording-form-input", placeholder: "Enter recording title..." %>
+    </div>
+
+    <div class="recording-form-group">
+      <%= f.label :game_name, "Game Name", class: "recording-form-label" %>
+      <%= f.text_field :game_name, class: "recording-form-input", placeholder: "What game did you play?" %>
+    </div>
+
+    <div class="recording-form-group">
+      <%= f.label :date_played, "Date Played", class: "recording-form-label" %>
+      <div class="recording-date-container">
+        <%= f.date_select :date_played %>
+      </div>
+    </div>
+
+    <div class="recording-form-group">
+      <%= f.label :players, "Players", class: "recording-form-label" %>
+      <%= f.text_field :players, class: "recording-form-input", placeholder: "Who was playing?" %>
+    </div>
+
+    <div class="recording-form-group">
+      <%= f.label :video, "Video File", class: "recording-form-label" %>
+      <div class="recording-file-wrapper">
+        <%= f.file_field :video, class: "recording-file-input", id: "video-upload" %>
+        <label for="video-upload" class="recording-file-label">
+          Choose video file or drag and drop
+        </label>
+      </div>
+    </div>
+
+    <div class="recording-form-group">
+      <div class="recording-form-label"></div>
+      <%= f.submit "Upload Recording", class: "recording-submit-btn" %>
+    </div>
+  <% end %>
+</div>

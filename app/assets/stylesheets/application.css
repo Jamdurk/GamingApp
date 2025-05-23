@@ -52,3 +52,252 @@ header, main, footer {
     padding: 4rem 2rem;
     font-family: "Courier New", monospace;
 }
+
+.recording-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+.recording-thumb {
+    background: #1a1a1a;
+    padding: 1rem;
+    border-radius: 10px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+.recording-grid a {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .recording-grid a:hover {
+    text-decoration: none;
+    color: inherit;
+    outline: none;
+  }
+
+/* Search bar styling */
+  .search-form {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+  
+  .search-bar {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .search-input {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: none;
+    width: 300px;
+    font-size: 1rem;
+    background-color: #1e1e1e;
+    color: #f0f0f0;
+  }
+  
+  .search-button {
+    padding: 0.5rem 1rem;
+    background-color: #ff5e00;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+  
+  .search-button:hover {
+    background-color: #ff884d;
+  }
+
+  /* Submission form styling, (claude generated) */
+.recording-form-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+}
+
+.recording-form-title {
+  text-align: center;
+  color: #ff6b35 !important;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 3rem;
+  text-shadow: 0 0 10px rgba(255, 107, 53, 0.3);
+  letter-spacing: 2px;
+}
+
+.recording-form-group {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.recording-form-label {
+  color: #cccccc !important;
+  font-weight: bold;
+  width: 120px;
+  text-align: right;
+  font-size: 1.1rem;
+}
+
+.recording-form-input {
+  padding: 0.75rem 1rem !important;
+  border: 2px solid #444444 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.recording-form-input:focus {
+  outline: none !important;
+  border-color: #ff6b35 !important;
+  background: #2a2a2a !important;
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.2) !important;
+}
+
+.recording-form-input:hover {
+  border-color: #666666 !important;
+  background: #2a2a2a !important;
+}
+
+.recording-date-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.recording-date-container select {
+  padding: 0.75rem !important;
+  border: 2px solid #444444 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  min-width: 80px;
+}
+
+.recording-date-container select:focus {
+  outline: none !important;
+  border-color: #ff6b35 !important;
+  background: #2a2a2a !important;
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.2) !important;
+}
+
+.recording-date-container select:hover {
+  border-color: #666666 !important;
+  background: #2a2a2a !important;
+}
+
+.recording-file-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.recording-file-input {
+  opacity: 0;
+  position: absolute;
+  z-index: -1;
+}
+
+.recording-file-label {
+  display: inline-block;
+  padding: 0.75rem 1.5rem !important;
+  border: 2px solid #444444 !important;
+  border-radius: 8px !important;
+  background: #1a1a1a !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #cccccc !important;
+  font-weight: bold;
+  text-align: center;
+}
+
+.recording-file-label:hover {
+  border-color: #ff6b35 !important;
+  background: #2a2a2a !important;
+  color: #ff6b35 !important;
+}
+
+.recording-submit-btn {
+  padding: 1rem 3rem !important;
+  background: #ff6b35 !important;
+  color: #000000 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 1.2rem !important;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.recording-submit-btn:hover {
+  background: #ff8c69 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3) !important;
+}
+
+.recording-submit-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .recording-form-group {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .recording-form-label {
+    text-align: center;
+    width: auto;
+    margin-bottom: 0.5rem;
+  }
+  
+  .recording-form-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+  
+  .recording-form-title {
+    font-size: 2rem;
+  }
+}
+  
+/* Processing status styling */
+.status-waiting {
+  color: #ffa500;
+  font-style: italic;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.status-ready {
+  color: #00ff99;
+  font-weight: bold;
+}
+
+  
+  

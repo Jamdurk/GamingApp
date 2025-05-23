@@ -27,7 +27,7 @@
       <div class="container">
         <%= link_to "Home", root_path %>
         <%= link_to "Recordings", recordings_path if defined?(recordings_path) %>
-        <!-- Add more navigation links as needed -->
+        <%= link_to "Submission", new_recording_path if defined?(new_recording_path) %>
       </div>
     </nav>
   </header>

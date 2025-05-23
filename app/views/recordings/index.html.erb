@@ -1,0 +1,31 @@
+<h1>Recordings</h1>
+
+<%= form_with url: recordings_path, method: :get, local: true, class: "search-form" do %>
+  <div class="search-bar">
+    <%= text_field_tag :q, params[:q], placeholder: "🔍 Search recordings...", class: "search-input" %>
+    <%= submit_tag "Go", class: "search-button" %>
+  </div>
+<% end %>
+
+
+<div class="recording-grid">
+  <% @recordings.each do |recording| %>
+    <%= link_to recording_path(recording) do %>
+      <div class="recording-thumb">
+        <% if recording.video.attached? %>
+          <%= video_tag recording.video, width: 320, autoplay: true, muted: true, loop: true %>
+        <% else %>
+          <p>No video attached</p>
+        <% end %>
+        <h3><%= recording.title %></h3>
+        <p>Game:    <%= recording.game_name.presence || "N/A" %></p>
+        <p>Players: <%= recording.players.presence || "N/A" %></p>
+        <p>Date:    <%= recording.date_played&.strftime("%B %d, %Y") || "N/A" %></p>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
+<div class="pagination">
+  <%= paginate @recordings, params: { q: params[:q] } %>
+</div>

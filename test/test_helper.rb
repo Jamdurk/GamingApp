@@ -1,6 +1,8 @@
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
+require "rails/test_help"
+require "mocha/minitest"
 
 
 
@@ -8,8 +10,6 @@ module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors)
-
-
     fixtures :all
 
     def attach_video(recording, filename: "test_attachment_check.mp4")
@@ -18,6 +18,7 @@ module ActiveSupport
         filename: filename,
         content_type: "video/mp4"
       )
+      
     end
 
     def attach_video_clip(clip, filename: "clip_test_generic.mp4")
@@ -26,6 +27,7 @@ module ActiveSupport
         filename: filename,
         content_type: "video/mp4"
       )
+      
     end
 
      # Convert "HH:MM:SS" → seconds. Simply placing the helper from our clip_generation_service in the testing env to allow testing
