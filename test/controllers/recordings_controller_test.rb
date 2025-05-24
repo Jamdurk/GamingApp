@@ -42,7 +42,148 @@ class RecordingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_match @clip.title, @response.body
   end
-  
 
-  
+  test "create with missing video shows error message" do
+    post recordings_path, params: {
+      recording: {
+        title: "Test Title",
+        game_name: "Test Game",
+        players: "Test Player",
+        date_played: Date.today
+        # No video attached!
+      }
+    }
+    
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation"
+    assert_match "Video can&#39;t be blank", response.body
+  end
+
+  test "create with blank title shows error" do
+    post recordings_path, params: {
+      recording: {
+        title: "", 
+        game_name: "Test Game",
+        players: "Test Player",
+        date_played: Date.today,
+        video: fixture_file_upload(
+          Rails.root.join("test/fixtures/files/recording_videos/test_attachment_check.mp4"),
+          "video/mp4"
+        )
+      }
+    }
+    
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation li", "Title can't be blank"
+  end
+
+  test "create with blank game_name shows error" do
+    post recordings_path, params: {
+      recording: {
+        title: "Test Title",
+        game_name: "",
+        players: "Test Player",
+        date_played: Date.today,
+        video: fixture_file_upload(
+          Rails.root.join("test/fixtures/files/recording_videos/test_attachment_check.mp4"),
+          "video/mp4"
+        )
+      }
+    }
+    
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation li", "Game name can't be blank"
+  end
+
+  test "create with no players shows error" do
+    post recordings_path, params: {
+      recording: {
+        title: "Test Title",
+        game_name: "Test Game",
+        players: "",
+        date_played: Date.today,
+        video: fixture_file_upload(
+          Rails.root.join("test/fixtures/files/recording_videos/test_attachment_check.mp4"),
+          "video/mp4"
+        )
+      }
+    }
+    
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation li", "Players can't be blank"
+  end
+
+  test "create with invalid video shows error" do
+    post recordings_path, params: {
+      recording: {
+        title: "Test Title",
+        game_name: "Test Game",
+        players: "Test Player",
+        date_played: Date.today,
+        video: fixture_file_upload(
+          Rails.root.join("test/fixtures/files/recording_videos/test_invalid_file.png"),
+          "video/png"
+        )
+      }
+    }
+    
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation li", "Video has an invalid content type (authorized content type is MP4)"
+  end
+
+  test "create with invalid file, that has mp4 extension shows error" do
+    post recordings_path, params: {
+      recording: {
+        title: "Test Title",
+        game_name: "Test Game",
+        players: "Test Player",
+        date_played: Date.today,
+        video: fixture_file_upload(
+          Rails.root.join("test/fixtures/files/recording_videos/test_unprocessable.mp4"),
+          "video/mp4"
+        )
+      }
+    }
+    
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation li", "Video has an invalid content type (authorized content type is MP4)"
+  end
+
+  test "create with video under 15 minutes shows error" do
+    post recordings_path, params: {
+      recording: {
+        title: "Test Title",
+        game_name: "Test Game",
+        players: "Test Player",
+        date_played: Date.today,
+        video: fixture_file_upload(
+          Rails.root.join("test/fixtures/files/recording_videos/test_less_than_15min.mp4"),
+          "video/mp4"
+        )
+      }
+    }
+    
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation li", /must be greater than 15 minutes/
+  end
+
+  test "create with valid recording redirects to show page" do
+    post recordings_path, params: {
+      recording: {
+        title: "Epic Gaming Session",
+        game_name: "Lethal Company", 
+        players: "Me and the boys",
+        date_played: Date.today,
+        video: fixture_file_upload(
+          Rails.root.join("test/fixtures/files/recording_videos/test_attachment_check.mp4"),
+          "video/mp4"
+        )
+      }
+    }
+    
+    assert_response :redirect
+    follow_redirect!
+    assert_match "Recording uploaded successfully", response.body
+    assert_match "Epic Gaming Session", response.body
+  end
 end
