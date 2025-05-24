@@ -299,5 +299,28 @@ header, main, footer {
   font-weight: bold;
 }
 
+/* Error message styling for submission form */ 
+#error_explanation {
+  background-color: #ff5e0020;  /* Slight red tint */
+  border: 2px solid #ff5e00;    /* Your orange theme color */
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  color: #ff5e00;
+}
+
+#error_explanation h2 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+#error_explanation ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+#error_explanation li {
+  margin-bottom: 0.25rem;
+}
   
   
