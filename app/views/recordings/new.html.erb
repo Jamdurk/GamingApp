@@ -1,5 +1,16 @@
 <div class="recording-form-container">
   <h1 class="recording-form-title"> Upload a New Recording</h1>
+  <% if @recording.errors.any? %>
+  <div id="error_explanation">
+    <h2><%= pluralize(@recording.errors.count, "error") %> prohibited this recording from being saved:</h2>
+    <ul>
+      <% @recording.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+  
 
   <%= form_with model: @recording, local: true, html: { multipart: true } do |f| %>
     <div class="recording-form-group">
