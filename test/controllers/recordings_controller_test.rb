@@ -186,4 +186,15 @@ class RecordingsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Recording uploaded successfully", response.body
     assert_match "Epic Gaming Session", response.body
   end
+
+test "processing_message returns correct messages/status" do
+  recording = recordings(:for_clips)
+  
+  # No transcript
+  assert_equal "Transcription in progress... please check back shortly.", recording.processing_message
+  
+  # With transcript
+  recording.create_transcript!(data: {test: "data"})
+  assert_equal "✅ Subtitled recording ready!", recording.processing_message
+end
 end
