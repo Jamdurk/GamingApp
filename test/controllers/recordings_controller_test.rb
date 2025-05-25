@@ -17,6 +17,12 @@ class RecordingsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "should get new" do
+    get new_recording_path
+    assert_response :success
+    assert_select "form"
+  end
+
   test "should return all recordings if no search param" do
     get recordings_path
     assert_response :success
