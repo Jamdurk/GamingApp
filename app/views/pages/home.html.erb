@@ -16,3 +16,22 @@
 
   <h4>I hope you enjoy your visit!</h4>
 </div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-icon">🎮</span>
+    <h5>Total Recordings</h5>
+    <p><%= @total_recordings %></p>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">🎞️</span>
+    <h5>Total Clips</h5>
+    <p><%= @total_clips %></p>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">⏱️</span>
+    <h5>Total Hours</h5>
+    <p><%= number_with_precision(@total_hours, precision: 2) %> hrs</p>
+  </div>
+</div>
+
