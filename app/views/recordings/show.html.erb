@@ -23,20 +23,31 @@
 
 <hr>
 
-<h2>Clips</h2>
-<% if @clips.any? %>
-  <ul>
-    <% @clips.each do |clip| %>
-      <li>
-        <h3><%= clip.title %></h3>
-        <% if clip.video.attached? %>
-          <%= video_tag clip.video, controls: true, width: 480 %>
-        <% else %>
-          <p>Clip video not available.</p>
-        <% end %>
-      </li>
-    <% end %>
-  </ul>
-<% else %>
-  <p>No clips available for this recording yet.</p>
-<% end %>
+<section class="clips-section">
+  <h2>🎮 Highlight Reel</h2>
+  <% if @clips.any? %>
+    <div class="clips-theater">
+      <% @clips.each_with_index do |clip, index| %>
+        <details class="clip-wrapper" <%= "open" if index == 0 %>>
+          <summary class="clip-header">
+            <span class="clip-number">#<%= index + 1 %></span>
+            <span class="clip-name"><%= clip.title %></span>
+            <span class="clip-duration">
+              <%= "#{(clip.end_time - clip.start_time).round}s" %>
+            </span>
+          </summary>
+          <% if clip.video.attached? %>
+            <%= video_tag clip.video, controls: true, class: "clip-player" %>
+          <% else %>
+            <div class="video-error">⚠️ Video processing...</div>
+          <% end %>
+        </details>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>🎬 No clips yet!</p>
+      <p>Use ClipGenerationService to create highlights</p>
+    </div>
+  <% end %>
+</section>

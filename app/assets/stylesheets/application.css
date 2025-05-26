@@ -322,5 +322,15 @@ header, main, footer {
 #error_explanation li {
   margin-bottom: 0.25rem;
 }
-  
+
+/* Clip styling */
+.clips-theater {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.clip-player {
+  width: 100%;
+  height: auto;
+}
   
