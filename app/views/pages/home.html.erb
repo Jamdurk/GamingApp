@@ -35,3 +35,20 @@
   </div>
 </div>
 
+<div class="recent-section">
+  <h2>🎯 Recent Gaming Sessions</h2>
+  <div class="recent-grid">
+    <% @recent_recordings.each do |recording| %>
+      <%= link_to recording_path(recording), class: "recent-card" do %>
+        <h3><%= recording.title %></h3>
+        <p class="game-name"><%= recording.game_name %></p>
+        <p class="date-played"><%= recording.date_played.strftime("%b %d") %></p>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<div class="cta-section">
+  <%= link_to "📹 Upload New Recording", new_recording_path, class: "cta-button" %>
+</div>
+
