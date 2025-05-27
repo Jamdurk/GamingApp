@@ -439,3 +439,142 @@ header, main, footer {
   transform: scale(1.05);
   box-shadow: 0 10px 30px rgba(255, 94, 0, 0.5);
 }
+
+/* Clip Creation Form Styling */
+.clip-form-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: rgba(26, 26, 26, 0.95);
+  border-radius: 12px;
+  border: 2px solid #333;
+}
+
+.clip-form-title {
+  text-align: center;
+  color: #ff6b35 !important;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  text-shadow: 0 0 10px rgba(255, 107, 53, 0.3);
+}
+
+.clip-context-info {
+  background: rgba(0, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border-left: 4px solid #00ffff;
+}
+
+.clip-context-info p {
+  margin: 0.25rem 0;
+  color: #cccccc;
+}
+
+.original-video-section {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.original-video-section h3 {
+  color: #ff5e00;
+  margin-bottom: 1rem;
+}
+
+.clip-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.clip-form-label {
+  display: block;
+  color: #cccccc !important;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.clip-form-input {
+  width: 100% !important;
+  padding: 0.75rem 1rem !important;
+  border: 2px solid #444444 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.clip-form-input:focus {
+  outline: none !important;
+  border-color: #ff6b35 !important;
+  background: #2a2a2a !important;
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.2) !important;
+}
+
+.clip-form-input::placeholder {
+  color: #888;
+  font-style: italic;
+}
+
+.time-input-hint {
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.clip-submit-btn {
+  width: 100%;
+  padding: 1rem 2rem !important;
+  background: #ff6b35 !important;
+  color: #000000 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 1.2rem !important;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 1rem;
+}
+
+.clip-submit-btn:hover {
+  background: #ff8c69 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3) !important;
+}
+
+.clip-back-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #00ffff;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.clip-back-link:hover {
+  text-decoration: underline;
+  color: #33ffff;
+}
+
+/* Responsive for mobile */
+@media (max-width: 768px) {
+  .clip-form-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+  
+  .clip-form-title {
+    font-size: 1.5rem;
+  }
+  
+  .original-video-section video {
+    width: 100%;
+    height: auto;
+  }
+}
