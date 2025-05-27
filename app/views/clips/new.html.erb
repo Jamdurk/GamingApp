@@ -1,2 +1,50 @@
-<h1>Clips#new</h1>
-<p>Find me in app/views/clips/new.html.erb</p>
+<div class="clip-form-container">
+  <h1 class="clip-form-title">🎬 Create Clip</h1>
+
+  <div class="clip-context-info">
+    <p><strong>Recording:</strong> <%= @recording.title %></p>
+    <p><strong>Game:</strong> <%= @recording.game_name %></p>
+    <p><strong>Players:</strong> <%= @recording.players %></p>
+  </div>
+
+  <% if @clip.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@clip.errors.count, "error") %> prohibited this clip from being saved:</h2>
+      <ul>
+        <% @clip.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="original-video-section">
+    <h3>Original Recording</h3>
+    <% if @recording.video.attached? %>
+      <%= video_tag @recording.video, controls: true, width: 640 %>
+    <% end %>
+  </div>
+
+  <%= form_with model: [@recording, @clip], local: true do |f| %>
+    <div class="clip-form-group">
+      <%= f.label :title, class: "clip-form-label" %>
+      <%= f.text_field :title, placeholder: "Epic moment!", class: "clip-form-input" %>
+    </div>
+
+    <div class="clip-form-group">
+      <%= f.label :start_time, "Start Time", class: "clip-form-label" %>
+      <%= f.text_field :start_time, placeholder: "00:01:30", class: "clip-form-input" %>
+      <div class="time-input-hint">Format: HH:MM:SS (e.g., 00:01:30)</div>
+    </div>
+
+    <div class="clip-form-group">
+      <%= f.label :end_time, "End Time", class: "clip-form-label" %>
+      <%= f.text_field :end_time, placeholder: "00:02:45", class: "clip-form-input" %>
+      <div class="time-input-hint">Format: HH:MM:SS (e.g., 00:02:45)</div>
+    </div>
+
+    <%= f.submit "Create Clip", class: "clip-submit-btn" %>
+  <% end %>
+
+  <%= link_to "← Back to Recording", @recording, class: "clip-back-link" %>
+</div>
