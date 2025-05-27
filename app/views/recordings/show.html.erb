@@ -24,11 +24,15 @@
 <hr>
 
 <section class="clips-section">
-  <h2>🎮 Highlight Reel</h2>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>🎮 Highlight Reel</h2>
+    <%= link_to "➕ Add Clip", new_recording_clip_path(@recording), class: "cta-button" %>
+  </div>
+  
   <% if @clips.any? %>
     <div class="clips-theater">
       <% @clips.each_with_index do |clip, index| %>
-        <details class="clip-wrapper" <%= "open" if index == 0 %>>
+        <details class="clip-wrapper"> 
           <summary class="clip-header">
             <span class="clip-number">#<%= index + 1 %></span>
             <span class="clip-name"><%= clip.title %></span>
@@ -47,7 +51,7 @@
   <% else %>
     <div class="empty-state">
       <p>🎬 No clips yet!</p>
-      <p>Use ClipGenerationService to create highlights</p>
+      <%= link_to "Create Your First Clip!", new_recording_clip_path(@recording), class: "cta-button" %>
     </div>
   <% end %>
 </section>
