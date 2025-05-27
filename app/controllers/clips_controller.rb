@@ -25,11 +25,10 @@ class ClipsController < ApplicationController
         redirect_to @recording, notice: 'Clip created successfully!'
       else
         @clip.errors.add(:base, result.error)
-        render :new
+        render :new, status: :unprocessable_entity
       end
     else
-      puts "CLIP ERRORS: #{@clip.errors.full_messages}"
-      render :new
+      render :new, status: :unprocessable_entity
     end
   end
 
