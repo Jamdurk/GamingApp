@@ -27,6 +27,173 @@ class ClipsControllerTest < ActionDispatch::IntegrationTest
         assert_select ".clip-form-label", "End Time"
       end
 
+      test "should create clip with valid data and redirect" do
+        recording = recordings(:for_clips) 
+        attach_video(recording)
+        
+        post recording_clips_path(recording), params: {
+          clip: {
+            title: "Test Clip",
+            start_time: "00:01:10",  
+            end_time: "00:01:40"     
+          }
+        }
+        
+        assert_response :redirect 
+        assert_redirected_to recording_path(recording)
+        assert_match "Clip created successfully", flash[:notice]
+      end
+
+      test "should not create clip with blank title" do
+        recording = recordings(:for_clips) 
+        attach_video(recording)
+        
+        post recording_clips_path(recording), params: {
+          clip: {
+            title: "",
+            start_time: "00:01:10",  
+            end_time: "00:01:40"     
+          }
+        }
+      
+        assert_response :unprocessable_entity
+        assert_select "#error_explanation"
+        assert_select "#error_explanation li", "Title can't be blank"  
+      end
+
+      
+      test "should not create clip with no start time" do
+        recording = recordings(:for_clips) 
+        attach_video(recording)
+        
+        post recording_clips_path(recording), params: {
+          clip: {
+            title: "Test Clip",
+            start_time: "",  
+            end_time: "00:01:40"     
+          }
+        }
+      
+        assert_response :unprocessable_entity
+        assert_select "#error_explanation"
+        assert_select "#error_explanation li", "Start time can't be blank"  
+      end
+
+      
+      test "should not create clip with no end time" do
+        recording = recordings(:for_clips) 
+        attach_video(recording)
+        
+        post recording_clips_path(recording), params: {
+          clip: {
+            title: "Test Clip",
+            start_time: "00:01:10",  
+            end_time: ""     
+          }
+        }
+      
+        assert_response :unprocessable_entity
+        assert_select "#error_explanation"
+        assert_select "#error_explanation li", "End time can't be blank"  
+      end
+
+      test "should not create clip with start time thats after end time" do
+        recording = recordings(:for_clips) 
+        attach_video(recording)
+        
+        post recording_clips_path(recording), params: {
+          clip: {
+            title: "Test Clip",
+            start_time: "00:01:10",  
+            end_time: "00:01:05"     
+          }
+        }
+      
+        assert_response :unprocessable_entity
+        assert_select "#error_explanation"
+        assert_select "#error_explanation li", "Start time must be before end time"  
+      end 
+      
+      test "should not create clip with start time thats equal to end time" do
+        recording = recordings(:for_clips) 
+        attach_video(recording)
+        
+        post recording_clips_path(recording), params: {
+          clip: {
+            title: "Test Clip",
+            start_time: "00:01:10",  
+            end_time: "00:01:10"     
+          }
+        }
+      
+        assert_response :unprocessable_entity
+        assert_select "#error_explanation"
+        assert_select "#error_explanation li", "Start time must be before end time"  
+      end
+
+      test "should not create clip with invalid time format" do
+        recording = recordings(:for_clips) 
+        attach_video(recording)
+        
+        post recording_clips_path(recording), params: {
+          clip: {
+            title: "Test Clip Invalid Time",
+            start_time: "99:99:99",  
+            end_time: "00:01:10"     
+          }
+        }
+      
+        assert_response :unprocessable_entity
+        assert_select "#error_explanation"
+        assert_select "#error_explanation li", "Start time must be before end time"
+      end
+
+    
+
+      test "should not create clip with title exceeding 30 characters" do
+        recording = recordings(:for_clips) 
+        attach_video(recording)
+        
+        post recording_clips_path(recording), params: {
+          clip: {
+            title: "Test Test Test Test Test Test Test Clip",
+            start_time: "00:01:10",  
+            end_time: "00:01:30"     
+          }
+        }
+      
+        assert_response :unprocessable_entity
+        assert_select "#error_explanation"
+        assert_select "#error_explanation li", "Title is too long (maximum is 30 characters)"  
+      end
+
+      test "should not create clip with dupilcate title" do
+        recording = recordings(:for_clips) 
+        attach_video(recording)
+        
+        post recording_clips_path(recording), params: {
+          clip: {
+            title: "Test Clip Dup",
+            start_time: "00:01:10",  
+            end_time: "00:01:30"     
+          }
+        }
+        assert_response :redirect
+      
+        recording_dup = recordings(:lethal_company)
+        attach_video(recording_dup)
+        post recording_clips_path(recording_dup), params: {
+          clip: {
+            title: "Test Clip Dup",
+            start_time: "00:02:10",  
+            end_time: "00:03:30"     
+          }
+        }
+
+        assert_response :unprocessable_entity
+        assert_select "#error_explanation"
+        assert_select "#error_explanation li", "Title has already been taken"  
+      end
       
 
 end
