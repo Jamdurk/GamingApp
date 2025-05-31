@@ -203,4 +203,12 @@ test "processing_message returns correct messages/status" do
   recording.create_transcript!(data: {test: "data"})
   assert_equal "✅ Subtitled recording ready!", recording.processing_message
 end
+
+test "should handle missing recording for show action" do
+  get recording_path(999999)  # Non-existent recording ID
+  
+  assert_redirected_to recordings_path
+  assert_match "Recording not found", flash[:alert]
+end
+
 end

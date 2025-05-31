@@ -194,6 +194,27 @@ class ClipsControllerTest < ActionDispatch::IntegrationTest
         assert_select "#error_explanation"
         assert_select "#error_explanation li", "Title has already been taken"  
       end
+
+      test "should handle missing recording for new action" do
+        get new_recording_clip_path(999999)  
+        
+        assert_redirected_to recordings_path
+        assert_match "Recording not found", flash[:alert]
+      end
+      
+      test "should handle missing recording for create action" do
+        post recording_clips_path(999999), params: {
+          clip: {
+            title: "Test Clip",
+            start_time: "00:01:10",
+            end_time: "00:01:40"
+          }
+        }
+        
+        assert_redirected_to recordings_path
+        assert_match "Recording not found", flash[:alert]
+      end
+
       
 
 end
