@@ -1,6 +1,9 @@
+require 'sidekiq/web'
+
 Rails.application.routes.draw do
-  get "clips/new"
-  get "clips/create"
+  mount Sidekiq::Web => '/sidekiq'
+
+  
     root "pages#home"
    
      get "up" => "rails/health#show", as: :rails_health_check
