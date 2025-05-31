@@ -52,4 +52,13 @@ class SubtitleGenerationServiceTest < ActiveSupport::TestCase
     assert_equal expected.strip, content.strip
   end
   
+
+  test "should handle missing transcript gracefully" do
+    recording_without_transcript = recordings(:for_clips)
+    service = SubtitleGenerationService.new(recording_without_transcript)
+
+    result = service.call
+    assert_not result.success?
+    assert_match "No transcript found", result.error
+  end
 end
