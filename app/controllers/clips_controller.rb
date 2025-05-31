@@ -1,4 +1,6 @@
 class ClipsController < ApplicationController
+before_action :find_recording
+
   def new
     @recording = Recording.find(params[:recording_id])
     @clip      = @recording.clips.build
@@ -46,4 +48,6 @@ class ClipsController < ApplicationController
          .each_with_index                                
          .sum { |v, idx| v * 60**idx }                   
   end
+  
+  
 end

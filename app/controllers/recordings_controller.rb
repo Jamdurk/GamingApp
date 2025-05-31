@@ -1,4 +1,5 @@
 class RecordingsController < ApplicationController
+  before_action :find_recording, only: [:show]
 
   def new 
     @recording = Recording.new
