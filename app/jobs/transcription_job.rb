@@ -1,5 +1,5 @@
 class TranscriptionJob < ApplicationJob
-  queue_as :default
+  queue_as :transcription
 
   def perform(recording_id)
     recording = Recording.find_by(id: recording_id)
