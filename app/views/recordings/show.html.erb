@@ -16,7 +16,12 @@
 
 <h2>Full Recording</h2>
 <% if @recording.video.attached? %>
-  <%= video_tag @recording.video, controls: true, width: 640 %>
+  <%= video_tag @recording.video, 
+      controls: true, 
+      class: "video-js vjs-default-skin",
+      data: { setup: '{}' },
+      width: 640,
+      height: 360 %>
 <% else %>
   <p>No video attached for this recording.</p>
 <% end %>
@@ -41,7 +46,10 @@
             </span>
           </summary>
           <% if clip.video.attached? %>
-            <%= video_tag clip.video, controls: true, class: "clip-player" %>
+            <%= video_tag clip.video, 
+                controls: true, 
+                class: "video-js vjs-default-skin clip-player",
+                data: { setup: '{}' } %>
           <% else %>
             <div class="video-error">⚠️ Video processing...</div>
           <% end %>

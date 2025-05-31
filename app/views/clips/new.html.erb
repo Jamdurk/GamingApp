@@ -21,7 +21,12 @@
   <div class="original-video-section">
     <h3>Original Recording</h3>
     <% if @recording.video.attached? %>
-      <%= video_tag @recording.video, controls: true, width: 640 %>
+      <%= video_tag @recording.video, 
+          controls: true, 
+          class: "video-js vjs-default-skin",
+          data: { setup: '{}' },
+          width: 640,
+          height: 360 %>
     <% end %>
   </div>
 
