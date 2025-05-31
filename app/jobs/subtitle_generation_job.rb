@@ -1,5 +1,5 @@
 class SubtitleGenerationJob < ApplicationJob
-  queue_as :default
+  queue_as :subtitles
 
   def perform(recording_id)
     recording = Recording.find_by(id: recording_id)
