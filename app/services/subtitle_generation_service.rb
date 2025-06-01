@@ -1,5 +1,6 @@
 require "open3"
 require "fileutils"
+require "timeout"
 include VideoUtils
 
 class SubtitleGenerationService
@@ -93,13 +94,17 @@ class SubtitleGenerationService
 
     Rails.logger.debug "[SubtitleGeneration] Running FFmpeg:\n#{cmd.join(' ')}"
 
-    stdout, stderr, status = Open3.capture3(*cmd)
+    Timeout::timeout(7200) do
+      stdout, stderr, status = Open3.capture3(*cmd)
     unless status.success?
       Rails.logger.error "[SubtitleGeneration] FFmpeg failed: #{stderr}"
       raise "FFmpeg failed: #{stderr}"
     end
+  end
 
     output_path
+  rescue Timeout::Error
+    raise "FFmpeg timed out after 2 hours"
   end
 
   def replace_video(output_path)

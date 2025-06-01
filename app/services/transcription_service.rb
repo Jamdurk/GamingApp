@@ -1,5 +1,6 @@
 require "open3"
 require "fileutils"
+require "timeout"
 include VideoUtils
 
 class TranscriptionService
@@ -57,15 +58,21 @@ class TranscriptionService
     ]
   
     puts "RUNNING: #{cmd.join(' ')}"
+
+  Timeout::timeout(14400) do
     stdout, stderr, status = Open3.capture3(*cmd)
     puts "STDERR: #{stderr}"
     puts "STDOUT: #{stdout}"
     raise "Whisper.cpp failed: #{stderr}" unless status.success?
+  end
   
     json_path = File.join(output_dir, "#{base_name}.json")
     raise "Whisper JSON output not found: #{json_path}" unless File.exist?(json_path)
+
   
     json_path
+    rescue Timeout::Error
+      raise "Whisper.cpp timed out after 4 hours"
   end
 
   def parse_transcript(json_path)
@@ -92,45 +99,10 @@ class TranscriptionService
       )
     end
   end
-  
-
-
  
   def timecode_to_seconds(str)
     return 0.0 if str.blank?
     parts = str.gsub(",", ".").split(":").map(&:to_f)
     (parts[0] * 3600) + (parts[1] * 60) + parts[2]
   end
-
-  def deduplicate_segments(segments, max_repetitions=3)
-    result = []
-    current_text = nil
-    repetition_count = 0
-    
-    segments.each do |segment|
-      if segment[:text] == current_text
-        repetition_count += 1
-        # Skip if we've seen this text too many times in a row
-        next if repetition_count > max_repetitions
-      else
-        current_text = segment[:text]
-        repetition_count = 1
-      end
-      
-      result << segment
-    end
-    
-    result
-  end
-
-Result = Struct.new(:success?, :error, keyword_init: true)
-
-def success
-  Result.new(success?: true)
-end
-
-def failure(msg)
-  Result.new(success?: false, error: msg)
-end
-
 end
