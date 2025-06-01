@@ -68,7 +68,7 @@ class ClipGenerationService
     #     -to : absolute end
     #     -c  copy : no re‑encode → very fast
     movie.transcode(output_path,
-                    %W[-ss #{start_sec} -to #{end_sec} -c copy])
+                    %W[-ss #{start_sec} -to #{end_sec}])
 
     # 7.  Build a new Clip associated to @recording.
     clip = @recording.clips.build(
