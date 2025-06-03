@@ -1,17 +1,18 @@
-# Load Ruby’s std‑lib helper for creating throw‑away files.
+# Load Ruby's std‑lib helper for creating throw‑away files.
 require "tempfile"
 
 class ClipGenerationService
-  def self.call(recording:, start_time:, end_time:, title:)
-    new(recording, start_time, end_time, title).call
+  def self.call(recording:, start_time:, end_time:, title:, clip: nil)
+    new(recording, start_time, end_time, title, clip).call
   end
 
   # Save incoming arguments into ivars so instance methods can use them.
-  def initialize(recording, start_time, end_time, title)
+  def initialize(recording, start_time, end_time, title, existing_clip = nil)
     @recording  = recording   # ActiveRecord::Recording
     @start_time = start_time  # "HH:MM:SS" string
     @end_time   = end_time    # "HH:MM:SS" string
-    @title      = title       # String for the clip’s title
+    @title      = title       # String for the clip's title
+    @clip       = existing_clip  # Existing clip to update (optional)
   end
 
   # ──────────────────────────────────────────
@@ -31,10 +32,11 @@ class ClipGenerationService
       return Result.new(success?: false, error: "End time cannot be empty")
     end
 
-    # 1.  Get a real file‑system path to the attached video blob.
-    video_path = ActiveStorage::Blob
-                   .service
-                   .send(:path_for, @recording.video.key)
+    # 1.  Download the video from S3 to a temp file
+    video_tempfile = Tempfile.new(['recording_', '.mp4'], binmode: true)
+    video_tempfile.write(@recording.video.download)
+    video_tempfile.rewind
+    video_path = video_tempfile.path
 
     # 2.  Wrap that file with Streamio so we can query metadata & transcode.
     movie = FFMPEG::Movie.new(video_path)
@@ -52,15 +54,7 @@ class ClipGenerationService
                         error:   "End time exceeds recording duration")
     end
 
-    if @start_time.nil? || @start_time.empty?
-      return Result.new(success?: false, error: "Start time cannot be empty")
-    end
-
-    if @end_time.nil? || @end_time.empty?
-      return Result.new(success?: false, error: "End time cannot be empty")
-    end
-
-    # 5.  Pick a unique temp path for FFmpeg’s output slice.
+    # 5.  Pick a unique temp path for FFmpeg's output slice.
     output_path = temp_output_path
 
     # 6.  Ask FFmpeg to copy‑slice the segment:
@@ -70,8 +64,8 @@ class ClipGenerationService
     movie.transcode(output_path,
                     %W[-ss #{start_sec} -to #{end_sec}])
 
-    # 7.  Build a new Clip associated to @recording.
-    clip = @recording.clips.build(
+    # 7.  Use existing clip or build a new one
+    clip = @clip || @recording.clips.build(
       title:      @title,
       start_time: start_sec,
       end_time:   end_sec
@@ -80,7 +74,7 @@ class ClipGenerationService
     # 8.  Attach the freshly sliced file.
     clip.video.attach(
       io:           File.open(output_path, "rb"),   # reopen in binary mode
-      filename:     File.basename(output_path),
+      filename:     "clip_#{clip.id || 'new'}.mp4",
       content_type: "video/mp4"
     )
 
@@ -95,8 +89,10 @@ class ClipGenerationService
     failure(e.message)
 
   ensure
-    # 11. House‑keeping: delete the temp file if it still exists.
+    # 11. House‑keeping: delete the temp files if they exist.
     File.delete(output_path) if output_path && File.exist?(output_path)
+    video_tempfile.close if defined?(video_tempfile) && video_tempfile
+    video_tempfile.unlink if defined?(video_tempfile) && video_tempfile
   end
 
   # ──────────────────────────────────────────
