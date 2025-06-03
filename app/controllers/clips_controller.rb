@@ -30,7 +30,8 @@ class ClipsController < ApplicationController
   private
 
   def find_recording
-    @recording = Recording.find(params[:recording_id])
+    @recording = Recording.find_by(id: params[:recording_id])
+    return redirect_to recordings_path, alert: "Recording not found" if @recording.nil?
   end
 
   def clips_params

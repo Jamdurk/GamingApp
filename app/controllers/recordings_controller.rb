@@ -1,7 +1,7 @@
 class RecordingsController < ApplicationController
   before_action :find_recording, only: [:show]
 
-  def new 
+  def new
     @recording = Recording.new
   end
 
@@ -9,9 +9,8 @@ class RecordingsController < ApplicationController
     @recording = Recording.new(recording_params)
 
     if @recording.save
-      # Enqueueyour backround job pipeline
-      TranscriptionJob.perform_later(@recording.id)
-      redirect_to @recording, notice: "Recording uploaded successfully. Transcription in progress"
+      RecordingProcessingJob.perform_later(@recording.id)
+      redirect_to @recording, notice: "Recording created! Processing in background."
     else
       render :new, status: :unprocessable_entity
     end
@@ -20,29 +19,37 @@ class RecordingsController < ApplicationController
   def index
     if params[:q].present?
       query = "%#{params[:q].downcase}%"
-      @recordings = Recording.where(
-        "LOWER(title) LIKE ? OR LOWER(game_name) LIKE ? OR LOWER(players) LIKE ?",
-        query,
-        query,
-        query
-      ).order(created_at: :desc).page(params[:page]).per(9)
+      @recordings = Recording
+                      .where("LOWER(title) LIKE ? OR LOWER(game_name) LIKE ? OR LOWER(players) LIKE ?",
+                             query, query, query)
+                      .order(created_at: :desc)
+                      .page(params[:page]).per(9)
     else
-      @recordings = Recording.order(created_at: :desc).page(params[:page]).per(9)
+      @recordings = Recording.order(created_at: :desc)
+                             .page(params[:page]).per(9)
     end
   end
-  
+
   def show
-    @recording = Recording.find(params[:id])
     @clips = @recording.clips
   end
-end
 
+  private
 
+  def find_recording
+    @recording = Recording.find_by(id: params[:id])
+    return if @recording
 
+    redirect_to recordings_path, alert: "Recording not found"
+  end
 
-
-private
-
-def recording_params
-  params.require(:recording).permit(:title, :game_name, :date_played, :players, :video)
+  def recording_params
+    params.require(:recording).permit(
+      :title,
+      :game_name,
+      :date_played,
+      :players,
+      :video
+    )
+  end
 end
