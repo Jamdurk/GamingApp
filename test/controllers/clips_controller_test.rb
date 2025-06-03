@@ -41,7 +41,7 @@ class ClipsControllerTest < ActionDispatch::IntegrationTest
         
         assert_response :redirect 
         assert_redirected_to recording_path(recording)
-        assert_match "Clip created successfully", flash[:notice]
+        assert_match "Clip is being processed in the background.", flash[:notice]
       end
 
       test "should not create clip with blank title" do

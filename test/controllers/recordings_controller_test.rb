@@ -189,7 +189,7 @@ class RecordingsControllerTest < ActionDispatch::IntegrationTest
     
     assert_response :redirect
     follow_redirect!
-    assert_match "Recording uploaded successfully", response.body
+    assert_match "Recording created! Processing in background.", response.body
     assert_match "Epic Gaming Session", response.body
   end
 
