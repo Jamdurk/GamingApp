@@ -2,8 +2,10 @@
 :queues:
   - [subtitles, 2]
   - [transcription, 1]
+  - [clips, 1]
   - [default, 1]
 
 :limits:
    transcription: 1
    subtitles: 1
+   clips: 1
