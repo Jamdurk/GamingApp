@@ -1,34 +1,27 @@
 class ClipsController < ApplicationController
-before_action :find_recording
+  before_action :find_recording
 
   def new
-    @recording = Recording.find(params[:recording_id])
-    @clip      = @recording.clips.build
+    @clip = @recording.clips.build
   end
 
   def create
-    @recording = Recording.find(params[:recording_id])
-    @clip      = @recording.clips.build(clips_params)
-    
-    # Convert time strings to seconds for validation purposes
-    @clip.start_time = timestamp_to_seconds(clips_params[:start_time]) if clips_params[:start_time].present?
-    @clip.end_time   = timestamp_to_seconds(clips_params[:end_time]) if clips_params[:end_time].present?
+    @clip = @recording.clips.build(clips_params)
 
-    # Validates clip, doesnt save it. Clip generation service already saves it
-    if @clip.valid?
-      result = ClipGenerationService.call(
-        recording: @recording,
-        start_time: clips_params[:start_time], # Pass original string to service
-        end_time: clips_params[:end_time],     # Pass original string to service  
-        title: @clip.title
-      )
+    # Convert “HH:MM:SS” to integer seconds for storage/validation
+    if clips_params[:start_time].present?
+      @clip.start_time = timestamp_to_seconds(clips_params[:start_time])
+    end
+    if clips_params[:end_time].present?
+      @clip.end_time = timestamp_to_seconds(clips_params[:end_time])
+    end
 
-      if result.success?
-        redirect_to @recording, notice: 'Clip created successfully!'
-      else
-        @clip.errors.add(:base, result.error)
-        render :new, status: :unprocessable_entity
-      end
+
+    if @clip.save
+      # Enqueue the job that will call ClipGenerationService in the background
+      ClipGenerationJob.perform_later(@clip.id)
+
+      redirect_to @recording, notice: "Clip is being processed in the background."
     else
       render :new, status: :unprocessable_entity
     end
@@ -36,18 +29,21 @@ before_action :find_recording
 
   private
 
+  def find_recording
+    @recording = Recording.find(params[:recording_id])
+  end
+
   def clips_params
     params.require(:clip).permit(:title, :start_time, :end_time)
   end
 
   def timestamp_to_seconds(ts)
-    parts = ts.split(":")                                
-    parts[2] = parts[2].to_f                             
-    parts.map.with_index { |v, idx| idx == 2 ? v : v.to_i } 
-         .reverse                                        
-         .each_with_index                                
-         .sum { |v, idx| v * 60**idx }                   
+    parts = ts.split(":")
+    parts[2] = parts[2].to_f
+    parts
+      .map.with_index { |v, idx| idx == 2 ? v : v.to_i }
+      .reverse
+      .each_with_index
+      .sum { |v, idx| v * 60**idx }
   end
-  
-  
 end
