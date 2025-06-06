@@ -1,126 +1,164 @@
-# Load Ruby's std‑lib helper for creating throw‑away files.
+# app/services/clip_generation_service.rb
 require "tempfile"
+require "open3"
 
 class ClipGenerationService
   def self.call(recording:, start_time:, end_time:, title:, clip: nil)
     new(recording, start_time, end_time, title, clip).call
   end
 
-  # Save incoming arguments into ivars so instance methods can use them.
   def initialize(recording, start_time, end_time, title, existing_clip = nil)
-    @recording  = recording   # ActiveRecord::Recording
-    @start_time = start_time  # "HH:MM:SS" string
-    @end_time   = end_time    # "HH:MM:SS" string
-    @title      = title       # String for the clip's title
-    @clip       = existing_clip  # Existing clip to update (optional)
+    @recording  = recording
+    @start_time = start_time
+    @end_time   = end_time
+    @title      = title
+    @clip       = existing_clip
   end
 
-  # ──────────────────────────────────────────
-  # MAIN WORKFLOW
-  # ──────────────────────────────────────────
   def call
     # Guard-rail validations
-    if @recording.nil?
-      return Result.new(success?: false, error: "Recording must be present to make clip")
-    end
+    return failure("Recording must be present to make clip") if @recording.nil?
+    return failure("Start time cannot be empty") if @start_time.blank?
+    return failure("End time cannot be empty") if @end_time.blank?
 
-    if @start_time.nil? || @start_time.empty?
-      return Result.new(success?: false, error: "Start time cannot be empty")
-    end
-
-    if @end_time.nil? || @end_time.empty?
-      return Result.new(success?: false, error: "End time cannot be empty")
-    end
-
-    # 1.  Download the video from S3 to a temp file
-    video_tempfile = Tempfile.new(['recording_', '.mp4'], binmode: true)
-    video_tempfile.write(@recording.video.download)
-    video_tempfile.rewind
-    video_path = video_tempfile.path
-
-    # 2.  Wrap that file with Streamio so we can query metadata & transcode.
-    movie = FFMPEG::Movie.new(video_path)
-
-    # 3.  Convert "HH:MM:SS" into integer seconds.
+    # Convert timestamps to seconds
     start_sec = timestamp_to_seconds(@start_time)
     end_sec   = timestamp_to_seconds(@end_time)
+    duration  = end_sec - start_sec
 
-    # 4.  Guard‑rail validations.
-    if end_sec <= start_sec
-      return Result.new(success?: false,
-                        error:   "End time must be after start")
-    elsif end_sec > movie.duration
-      return Result.new(success?: false,
-                        error:   "End time exceeds recording duration")
-    end
+    # Basic time validation
+    return failure("End time must be after start time") if end_sec <= start_sec
+    return failure("Clip duration must be between 1 second and 5 minutes") if duration < 1 || duration > 300
 
-    # 5.  Pick a unique temp path for FFmpeg's output slice.
+    # Get signed S3 URL with extended expiration for large files
+    s3_url = @recording.video.url(expires_in: 2.hours)
+    
+    # Create output path
     output_path = temp_output_path
 
-    # 6.  Ask FFmpeg to copy‑slice the segment:
-    #     -ss : seek to start
-    #     -to : absolute end
-    #     -c  copy : no re‑encode → very fast
-    movie.transcode(output_path,
-                    %W[-ss #{start_sec} -to #{end_sec}])
-
-    # 7.  Use existing clip or build a new one
-    clip = @clip || @recording.clips.build(
+    # Build FFmpeg command for high-quality clip extraction
+    cmd = build_ffmpeg_command(s3_url, start_sec, duration, output_path)
+    
+    Rails.logger.info "[ClipGeneration] Starting FFmpeg for #{@recording.id} (#{start_sec}s - #{end_sec}s)"
+    
+    # Execute FFmpeg with timeout protection
+    stdout, stderr, status = nil
+    begin
+      Timeout::timeout(300) do  # 5 minute timeout for clip generation
+        stdout, stderr, status = Open3.capture3(*cmd)
+      end
+    rescue Timeout::Error
+      return failure("Clip generation timed out after 5 minutes")
+    end
+    
+    unless status&.success?
+      Rails.logger.error "[ClipGeneration] FFmpeg failed: #{stderr}"
+      return failure("Video processing failed: #{stderr&.lines&.last}")
+    end
+    
+    # Verify output file exists and has content
+    unless File.exist?(output_path) && File.size(output_path) > 0
+      return failure("Failed to generate clip file")
+    end
+    
+    # Create or update clip record
+    clip = @clip || @recording.clips.build
+    clip.assign_attributes(
       title:      @title,
-      start_time: start_sec,
-      end_time:   end_sec
+      start_time: start_sec.to_i,
+      end_time:   end_sec.to_i
     )
-
-    # 8.  Attach the freshly sliced file.
+    
+    # Attach the clip video
     clip.video.attach(
-      io:           File.open(output_path, "rb"),   # reopen in binary mode
-      filename:     "clip_#{clip.id || 'new'}.mp4",
+      io:           File.open(output_path, "rb"),
+      filename:     "#{@recording.title.parameterize}_clip_#{Time.current.to_i}.mp4",
       content_type: "video/mp4"
     )
-
-    # 9.  Persist! (`save!` will raise if validations fail)
-    clip.save!
-
-    # 10. Return a success Result carrying the clip.
-    success(clip)
-
-  rescue => e
-    # Catch anything (FFmpeg error, validation error, etc.).
-    failure(e.message)
-
+    
+    # Save and return result
+    if clip.save
+      Rails.logger.info "[ClipGeneration] Successfully created clip #{clip.id}"
+      success(clip)
+    else
+      failure(clip.errors.full_messages.join(", "))
+    end
+    
+  rescue StandardError => e
+    Rails.logger.error "[ClipGeneration] Unexpected error: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
+    failure("An unexpected error occurred: #{e.message}")
+    
   ensure
-    # 11. House‑keeping: delete the temp files if they exist.
-    File.delete(output_path) if output_path && File.exist?(output_path)
-    video_tempfile.close if defined?(video_tempfile) && video_tempfile
-    video_tempfile.unlink if defined?(video_tempfile) && video_tempfile
+    # Clean up temp file
+    if output_path && File.exist?(output_path)
+      File.delete(output_path) 
+      Rails.logger.debug "[ClipGeneration] Cleaned up temp file: #{output_path}"
+    end
   end
 
-  # ──────────────────────────────────────────
-  # PRIVATE HELPERS
-  # ──────────────────────────────────────────
   private
 
-  # Convert "HH:MM:SS" → seconds.
+  def build_ffmpeg_command(input_url, start_sec, duration, output_path)
+    [
+      "ffmpeg",
+      "-ss", start_sec.to_s,          # Seek before input (crucial for performance)
+      "-i", input_url,                # Input from S3 URL
+      "-t", duration.to_s,            # Duration to extract
+      
+      # Video encoding settings for quality preservation
+      "-c:v", "libx264",              # H.264 codec
+      "-preset", "slow",              # Better compression (worth it for gaming footage)
+      "-crf", "18",                   # High quality (18 is visually lossless)
+      "-pix_fmt", "yuv420p",          # Compatibility
+      "-profile:v", "high",           # H.264 high profile
+      "-level", "4.1",                # Compatibility level
+      
+      # Audio settings
+      "-c:a", "aac",                  # AAC audio
+      "-b:a", "320k",                 # High quality audio
+      "-ar", "48000",                 # Sample rate
+      
+      # Output optimization
+      "-movflags", "+faststart",      # Web optimization
+      "-max_muxing_queue_size", "9999", # Prevent packet loss
+      "-avoid_negative_ts", "make_zero", # Fix timestamp issues
+      
+      # Overwrite and suppress verbose output
+      "-y",                           # Overwrite output
+      "-loglevel", "warning",         # Only show warnings/errors
+      "-stats",                       # Show progress stats
+      
+      output_path
+    ]
+  end
+
   def timestamp_to_seconds(ts)
-    parts = ts.split(":")                                # Split timestamp "00:00:05.5" into array ["00","00","05.5"]
-    parts[2] = parts[2].to_f                             # Convert seconds part to float to preserve decimals (5.5)
-    parts.map.with_index { |v, idx| idx == 2 ? v : v.to_i } # Convert hours and minutes to integers, keep seconds as float
-         .reverse                                        # Reverse to [5.5, 0, 0] (seconds, minutes, hours)
-         .each_with_index                                # Create pairs with indices: [[5.5,0], [0,1], [0,2]]
-         .sum { |v, idx| v * 60**idx }                   # Calculate: 5.5*60⁰ + 0*60¹ + 0*60² = 5.5 seconds
+    # Handle both HH:MM:SS and MM:SS formats
+    parts = ts.strip.split(":").map(&:to_f)
+    
+    case parts.length
+    when 3  # HH:MM:SS
+      (parts[0] * 3600) + (parts[1] * 60) + parts[2]
+    when 2  # MM:SS
+      (parts[0] * 60) + parts[1]
+    else
+      raise ArgumentError, "Invalid timestamp format: #{ts}"
+    end
   end
 
-  # Create an empty /tmp/clip_XXXX.mp4 and return its path.
   def temp_output_path
-    tempfile = Tempfile.new(["clip_", ".mp4"], binmode: true)
-    tempfile.path  # string path for FFmpeg
-  ensure
-    tempfile.close # close handle; file stays until we delete it above
+    # Create temp file in system temp directory
+    Dir::Tmpname.create(['clip_', '.mp4']) { |path| path }
   end
 
-  # Sugar helpers to wrap Result creation.
+  # Result object for consistent returns
   Result = Struct.new(:success?, :clip, :error, keyword_init: true)
 
-  def success(clip) = Result.new(success?: true,  clip: clip)
-  def failure(msg)  = Result.new(success?: false, error: msg)
+  def success(clip)
+    Result.new(success?: true, clip: clip)
+  end
+
+  def failure(error_message)
+    Result.new(success?: false, error: error_message)
+  end
 end
