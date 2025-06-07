@@ -9,15 +9,16 @@ class ClipGenerationServiceTest < ActiveSupport::TestCase
     test "clip generation service is functional" do
         attach_video(@clip_generation)
         result = ClipGenerationService.call(
-            recording:   @clip_generation,
-            start_time: "00:00:30",
-            end_time:   "00:02:00",
-            title:      "clip_generation_test"
-            
+          recording:   @clip_generation,
+          start_time: "00:00:30",
+          end_time:   "00:02:00",
+          title:      "clip_generation_test"
         )
+        
+        puts "Error: #{result.error}" unless result.success?  # Debug line
         assert result.success?
         assert result.clip.video.attached?
-    end
+       end
 
     test "clip generation invalid if over 5 minutes" do
         attach_video(@clip_generation)
@@ -29,7 +30,7 @@ class ClipGenerationServiceTest < ActiveSupport::TestCase
         )
         assert_not result.success?
         assert_nil result.clip
-        assert_match "Video duration must be between", result.error
+        assert_match "Clip duration must be between 1 second and 5 minutes", result.error
     end
 
     test "clip generation invalid if less that 1 second" do # This ones an edge case as the clip duration minimum is 1 second
@@ -42,7 +43,7 @@ class ClipGenerationServiceTest < ActiveSupport::TestCase
         )
         assert_not result.success?
         assert_nil result.clip
-        assert_match "Start time must be before end", result.error
+        assert_match "Clip duration must be between 1 second and 5 minutes", result.error
     end
 
     test "clip generation invalid if no title is present" do
