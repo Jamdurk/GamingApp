@@ -69,3 +69,5 @@ group :test do
 
   gem "rails-controller-testing"
 end
+
+gem "dockerfile-rails", ">= 1.7", :group => :development
