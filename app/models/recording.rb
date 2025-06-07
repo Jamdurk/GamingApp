@@ -4,7 +4,7 @@ class Recording < ApplicationRecord
     has_one  :transcript, dependent: :destroy
     has_many :segments, through: :transcript
     # Video upload validations
-    validates :video, attached:         true, on: :update 
+    validates :video, attached:         true
     validates :video, duration:       { greater_than: 15.minutes }
     validates :video, content_type:   ["video/mp4"]
     validates :video, processable_file: true
