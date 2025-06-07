@@ -12,6 +12,10 @@ module ActiveSupport
     parallelize(workers: :number_of_processors)
     fixtures :all
 
+    setup do
+      ActiveStorage::Current.url_options = { host: 'localhost', port: 3000 }
+    end
+
     def attach_video(recording, filename: "test_attachment_check.mp4")
       recording.video.attach(
         io: File.open(Rails.root.join("test", "fixtures", "files", "recording_videos", filename)),
