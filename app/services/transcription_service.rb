@@ -54,7 +54,8 @@ class TranscriptionService
       "-of", File.join(output_dir, base_name),
       "-otxt",
       "-oj",
-      "-t", "24"
+      "-t", "4",
+      "-ng" # Force cpu ONLY for fly.io
     ]
   
     puts "RUNNING: #{cmd.join(' ')}"
