@@ -94,7 +94,7 @@ class SubtitleGenerationService
 
     Rails.logger.debug "[SubtitleGeneration] Running FFmpeg:\n#{cmd.join(' ')}"
 
-    Timeout::timeout(7200) do
+    Timeout::timeout(7200) do # 2 Hours
       stdout, stderr, status = Open3.capture3(*cmd)
     unless status.success?
       Rails.logger.error "[SubtitleGeneration] FFmpeg failed: #{stderr}"
