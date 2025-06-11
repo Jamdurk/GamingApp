@@ -60,7 +60,7 @@ class TranscriptionService
   
     puts "RUNNING: #{cmd.join(' ')}"
 
-  Timeout::timeout(14400) do
+  Timeout::timeout(259200) do # 3 Days
     stdout, stderr, status = Open3.capture3(*cmd)
     puts "STDERR: #{stderr}"
     puts "STDOUT: #{stdout}"
@@ -73,7 +73,7 @@ class TranscriptionService
   
     json_path
     rescue Timeout::Error
-      raise "Whisper.cpp timed out after 4 hours"
+      raise "Whisper.cpp timed out after 3 days"
   end
 
   def parse_transcript(json_path)
