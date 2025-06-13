@@ -13,4 +13,4 @@ amazon:
   region: <%= Rails.application.credentials.dig(:aws, :region) %>
   bucket: <%= Rails.application.credentials.dig(:aws, :bucket) %>
   upload:
-    expires_in: 86400
+    expires_in: 86400 # 24 Hours
