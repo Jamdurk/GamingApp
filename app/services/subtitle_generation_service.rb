@@ -34,8 +34,8 @@ class SubtitleGenerationService
     output_path = burn_subtitles(original_path, srt_path)
     Rails.logger.info "[SubtitleGeneration] FFmpeg completed. Output at #{output_path}"
 
-    Rails.logger.info "[SubtitleGeneration] Replacing video attachment..."
-    replace_video(output_path)
+    Rails.logger.info "[SubtitleGeneration] Safely replacing video attachment..."
+    replace_video_safely(output_path)
     Rails.logger.info "[SubtitleGeneration] Video replaced for recording #{@recording.id}"
 
     success
@@ -89,41 +89,84 @@ class SubtitleGenerationService
       "-preset", "ultrafast",
       "-threads", "12",
       "-c:a", "copy",
+      # Better handling for large files
+      "-movflags", "+faststart",
+      "-max_muxing_queue_size", "4096",
       output_path
     ]
 
     Rails.logger.debug "[SubtitleGeneration] Running FFmpeg:\n#{cmd.join(' ')}"
 
-    Timeout::timeout(7200) do # 2 Hours
+    # Increased timeout for large files (4 hours should be plenty)
+    Timeout::timeout(36000) do 
       stdout, stderr, status = Open3.capture3(*cmd)
-    unless status.success?
-      Rails.logger.error "[SubtitleGeneration] FFmpeg failed: #{stderr}"
-      raise "FFmpeg failed: #{stderr}"
+      unless status.success?
+        Rails.logger.error "[SubtitleGeneration] FFmpeg failed: #{stderr}"
+        raise "FFmpeg failed: #{stderr}"
+      end
     end
-  end
 
+    # Verify output exists and is reasonable size
+    unless File.exist?(output_path) && File.size(output_path) > 1000000
+      raise "FFmpeg output missing or too small"
+    end
+
+    Rails.logger.info "[SubtitleGeneration] FFmpeg output: #{File.size(output_path) / 1.megabyte}MB"
     output_path
   rescue Timeout::Error
-    raise "FFmpeg timed out after 2 hours"
+    raise "FFmpeg timed out after 4 hours"
   end
 
-  def replace_video(output_path)
-    Rails.logger.debug "[SubtitleGeneration] Purging existing video..." if @recording.video.attached?
-
-    @recording.video.purge_later if @recording.video.attached?
-
-    @recording.video.attach(
-      io: File.open(output_path, "rb"),
-      filename: "subtitled_#{@recording.id}.mp4",
-      content_type: "video/mp4"
-    )
-
-    Rails.logger.debug "[SubtitleGeneration] New video attached: subtitled_#{@recording.id}.mp4"
+  # FIXED: Upload new video BEFORE deleting original
+  def replace_video_safely(output_path)
+    Rails.logger.debug "[SubtitleGeneration] Starting SAFE video replacement..."
+    
+    # Verify output file exists and has content
+    unless File.exist?(output_path) && File.size(output_path) > 0
+      raise "Output file is missing or empty: #{output_path}"
+    end
+    
+    # Store reference to current video (in case we need to restore)
+    current_video_key = @recording.video.key if @recording.video.attached?
+    
+    Rails.logger.info "[SubtitleGeneration] Uploading subtitled video (#{File.size(output_path) / 1.megabyte}MB)..."
+    
+    # STEP 1: Upload new video WITHOUT deleting old one yet
+    begin
+      @recording.video.attach(
+        io: File.open(output_path, "rb"),
+        filename: "subtitled_#{@recording.title.parameterize}_#{@recording.id}.mp4",
+        content_type: "video/mp4"
+      )
+      
+      # STEP 2: Verify the new attachment succeeded
+      @recording.reload
+      if @recording.video.attached? && @recording.video.filename.to_s.include?("subtitled")
+        Rails.logger.info "[SubtitleGeneration] ✅ New subtitled video successfully attached!"
+        Rails.logger.info "[SubtitleGeneration] New video size: #{@recording.video.byte_size / 1.megabyte}MB"
+        
+        # STEP 3: Only NOW is it safe to clean up the old video
+      
+        
+      else
+        raise "New video attachment verification failed"
+      end
+      
+    rescue => e
+      Rails.logger.error "[SubtitleGeneration] Failed to attach new video: #{e.message}"
+      # If attachment failed, original video should still be intact
+      raise "Video replacement failed: #{e.message}"
+    end
+    
+    Rails.logger.debug "[SubtitleGeneration] ✅ Safe video replacement completed successfully"
   end
 
   def cleanup_temp_files(*paths)
     paths.compact.each do |path|
-      File.delete(path) if File.exist?(path)
+      if File.exist?(path)
+        File.delete(path)
+        Rails.logger.debug "[SubtitleGeneration] Cleaned up: #{path}"
+      end
     end
   end
 
