@@ -578,3 +578,47 @@ header, main, footer {
     height: auto;
   }
 }
+
+/* Direct upload progress styling */
+.progress-bar-container {
+  background: #333;
+  border-radius: 4px;
+  height: 20px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #ff5e00, #ff8c69);
+  height: 100%;
+  width: 0%;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.progress-text {
+  margin-top: 8px;
+  color: #ff5e00;
+  font-size: 0.9rem;
+  text-align: center;
+  font-family: "Courier New", monospace;
+}
+
+/* Disable submit button during upload */
+.recording-submit-btn:disabled {
+  background: #666 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+/* Large file upload indicator */
+.large-file-notice {
+  background: rgba(255, 94, 0, 0.1);
+  border: 1px solid #ff5e00;
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 10px;
+  color: #ff5e00;
+  font-size: 0.9rem;
+  text-align: center;
+}

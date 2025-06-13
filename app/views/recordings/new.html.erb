@@ -38,16 +38,24 @@
     <div class="recording-form-group">
       <%= f.label :video, "Video File", class: "recording-form-label" %>
       <div class="recording-file-wrapper">
-        <%= f.file_field :video, class: "recording-file-input", id: "video-upload" %>
+        <%= f.file_field :video, class: "recording-file-input", id: "video-upload", direct_upload: true %>
         <label for="video-upload" class="recording-file-label">
           Choose video file or drag and drop
         </label>
+        
+        <!-- Progress indicator for large uploads -->
+        <div id="upload-progress" style="display: none; margin-top: 15px;">
+          <div class="progress-bar-container" style="background: #333; border-radius: 4px; height: 20px; overflow: hidden;">
+            <div class="progress-fill" style="background: #ff5e00; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+          </div>
+          <div class="progress-text" style="margin-top: 8px; color: #ff5e00; font-size: 0.9rem; text-align: center;">Uploading... 0%</div>
+        </div>
       </div>
     </div>
 
     <div class="recording-form-group">
       <div class="recording-form-label"></div>
-      <%= f.submit "Upload Recording", class: "recording-submit-btn" %>
+      <%= f.submit "Upload Recording", class: "recording-submit-btn", id: "submit-btn" %>
     </div>
   <% end %>
 </div>
