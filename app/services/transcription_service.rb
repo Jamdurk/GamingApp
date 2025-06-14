@@ -1,7 +1,6 @@
 require "open3"
 require "fileutils"
 require "timeout"
-include VideoUtils
 
 class TranscriptionService
   def self.call(recording:)
@@ -13,19 +12,29 @@ class TranscriptionService
   end
 
   def call 
-    input_path = download_video
-    wav_path   = convert_to_wav(input_path)
-    json_path  = run_whisper(wav_path)
-    parse_transcript(json_path)
+    # Stream directly from S3 - no local download needed!
+    @recording.video.open do |video_tempfile|
+      wav_path = convert_to_wav(video_tempfile.path)
+      json_path = run_whisper(wav_path)
+      result = parse_transcript(json_path)
+      
+      # Clean up temp files
+      cleanup_temp_files([video_tempfile.path, wav_path, json_path])
+      
+      result
+    end
   end
 
   private
 
-  def convert_to_wav(mp4_path)
-    wav_path = mp4_path.sub(File.extname(mp4_path), ".wav")
+  def convert_to_wav(input_path)
+    # Generate unique filename to avoid conflicts
+    timestamp = Time.current.to_i
+    wav_path = "/tmp/audio_#{timestamp}_#{Process.pid}.wav"
+    
     cmd = [
       "ffmpeg",
-      "-i", mp4_path,
+      "-i", input_path,
       "-ar", "16000",
       "-ac", "1",
       "-f", "wav",
@@ -33,13 +42,16 @@ class TranscriptionService
     ]
 
     stdout, stderr, status = Open3.capture3(*cmd)
-    raise "FFmpeg failed: #{stderr}" unless status.success?
+    unless status.success?
+      cleanup_temp_files([wav_path])
+      raise "FFmpeg failed: #{stderr}"
+    end
 
     wav_path
   end
 
   def run_whisper(input_path)
-    base_name  = File.basename(input_path, File.extname(input_path))
+    base_name = "whisper_#{Time.current.to_i}_#{Process.pid}"
     output_dir = "/tmp"
     model_path = Rails.root.join("whisper.cpp", "models", "ggml-large-v2.bin").to_s
   
@@ -60,24 +72,30 @@ class TranscriptionService
   
     puts "RUNNING: #{cmd.join(' ')}"
 
-  Timeout::timeout(259200) do # 3 Days
-    stdout, stderr, status = Open3.capture3(*cmd)
-    puts "STDERR: #{stderr}"
-    puts "STDOUT: #{stdout}"
-    raise "Whisper.cpp failed: #{stderr}" unless status.success?
-  end
+    Timeout::timeout(259200) do # 3 Days
+      stdout, stderr, status = Open3.capture3(*cmd)
+      puts "STDERR: #{stderr}"
+      puts "STDOUT: #{stdout}"
+      
+      unless status.success?
+        cleanup_temp_files([File.join(output_dir, "#{base_name}.json")])
+        raise "Whisper.cpp failed: #{stderr}"
+      end
+    end
   
     json_path = File.join(output_dir, "#{base_name}.json")
-    raise "Whisper JSON output not found: #{json_path}" unless File.exist?(json_path)
-
+    unless File.exist?(json_path)
+      raise "Whisper JSON output not found: #{json_path}"
+    end
   
     json_path
-    rescue Timeout::Error
-      raise "Whisper.cpp timed out after 3 days"
+  rescue Timeout::Error
+    cleanup_temp_files([File.join(output_dir, "#{base_name}.json")])
+    raise "Whisper.cpp timed out after 3 days"
   end
 
   def parse_transcript(json_path)
-    raw  = File.read(json_path)
+    raw = File.read(json_path)
     data = JSON.parse(raw)
 
     segments = data["transcription"].map do |entry|
@@ -95,9 +113,17 @@ class TranscriptionService
       next if seg["text"].blank?
       transcript.segments.create!(
         start_time: seg["start"],
-        end_time:   seg["end"],
-        text:       seg["text"]
+        end_time: seg["end"],
+        text: seg["text"]
       )
+    end
+  end
+
+  def cleanup_temp_files(file_paths)
+    file_paths.each do |path|
+      File.delete(path) if path && File.exist?(path)
+    rescue => e
+      Rails.logger.warn "Failed to cleanup temp file #{path}: #{e.message}"
     end
   end
  
