@@ -16,6 +16,9 @@ class Recording < ApplicationRecord
     validates :title,     presence: true,  length: { maximum: 25 }, uniqueness: true
     validates :game_name, presence: true,  length: { maximum: 25 }
     validates :players,   presence: true,  length: { maximum: 50 } # Right now players is a single attribute, and the model here is contraining. Will need to add player model at some point
+    validate :video_must_be_processable
+    validates :video, size: { less_than: 5.gigabytes, message: 'must be less than 5GB. For larger files, please compress them first using Handbrake or similar tools.' }
+
 
 
     def show_processing_section?
@@ -27,6 +30,16 @@ class Recording < ApplicationRecord
         "Transcription in progress... please check back shortly."
       else
         "✅ Subtitled recording ready!"
+      end
+    end
+
+    def video_must_be_processable
+      return unless video.attached?
+      
+      # For direct uploads, the file might not be analyzed yet
+      if video.blob.metadata.blank?
+        # Queue analysis if it hasn't happened yet
+        video.analyze_later unless video.analyzed?
       end
     end
 end
