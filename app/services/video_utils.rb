@@ -1,16 +1,19 @@
 
 module VideoUtils
-    def download_video
-        temp_file = Tempfile.new(['recording', '.mp4'])
-    
-        @recording.video.open do |file|
-          FileUtils.cp(file.path, temp_file.path)
-        end
-    
-        FileUtils.chmod(0644, temp_file.path)
-        temp_file.path
-      end
+  def download_video
+    output_dir = Rails.root.join("tmp", "video_cache") # ✅ on disk, not RAM
+    FileUtils.mkdir_p(output_dir)
+  
+    temp_path = output_dir.join("original_#{@recording.id}_#{Time.now.to_i}.mp4").to_s
+  
+    @recording.video.open do |file|
+      FileUtils.cp(file.path, temp_path)
+      FileUtils.chmod(0644, temp_path)
     end
+  
+    temp_path
+  end
+  
 
 
     def deduplicate_segments(segments, max_repetitions=3) # Was originally using this in my transcription service, but removed due to some conflicts. Storing here in case for future use.

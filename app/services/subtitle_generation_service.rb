@@ -76,7 +76,8 @@ class SubtitleGenerationService
   end
 
   def burn_subtitles(input_path, srt_path)
-    output_path = Tempfile.new(["burned_", ".mp4"]).path
+    output_path = Rails.root.join("tmp", "video_cache", "burned_#{@recording.id}_#{Time.now.to_i}.mp4").to_s
+    FileUtils.mkdir_p(File.dirname(output_path))    
 
     cmd = [
       "ffmpeg",

@@ -43,14 +43,19 @@ console_command = '/rails/bin/rails console'
 # Sidekiq gets 8GB for transcription (needs 4 CPUs for 8GB)
 [[vm]]
   memory = '8gb'
-  cpu_kind = 'shared'
-  cpus = 4                    # Changed from 2 to 4
+  cpu_kind = 'performance'
+  cpus = 4
   processes = ['sidekiq']
+  
 
 [env]
   RAILS_LOG_LEVEL = "info"
   RAILS_SERVE_STATIC_FILES = "true"
 
+[[mounts]]
+  source = "data"
+  destination = "/data"
+  processes = ["sidekiq"]
 
 swap_size_mb = 2048
 
