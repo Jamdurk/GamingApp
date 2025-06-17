@@ -89,7 +89,7 @@ class ClipGenerationService
      end
    else
      # Production: use S3 URL
-     input_source = @recording.video.url(expires_in: 2.hours)
+     input_source = @recording.video.url(expires_in: 7200)
      
      # Create output path
      output_path = temp_output_path
