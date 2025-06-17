@@ -46,15 +46,14 @@ console_command = '/rails/bin/rails console'
   cpu_kind = 'performance'
   cpus = 4
   processes = ['sidekiq']
-  
 
 [env]
   RAILS_LOG_LEVEL = "info"
   RAILS_SERVE_STATIC_FILES = "true"
 
 [[mounts]]
-  source = "data"
-  destination = "/data"
+  source = "video_storage"
+  destination = "/video_storage"
   processes = ["sidekiq"]
 
 swap_size_mb = 2048
