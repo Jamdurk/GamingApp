@@ -24,14 +24,17 @@ class Recording < ApplicationRecord
     def show_processing_section?
       transcript.nil? || transcript.created_at >= 3.hours.ago
     end
-  
+    
     def processing_message
       if transcript.nil?
         "Transcription in progress... please check back shortly."
-      else
+      elsif video.filename.to_s.include?("subtitled")
         "✅ Subtitled recording ready!"
+      else
+        "Subtitles are being burned into the video... please check back shortly."
       end
     end
+    
 
     def video_must_be_processable
       return unless video.attached?
