@@ -1,4 +1,3 @@
-# app/services/clip_generation_service.rb
 require "tempfile"
 require "open3"
 
@@ -160,32 +159,32 @@ class ClipGenerationService
  def build_ffmpeg_command(input_source, start_sec, duration, output_path)
    [
      "ffmpeg",
-     "-ss", start_sec.to_s,          # Seek before input (crucial for performance)
-     "-i", input_source,             # Input from file path or S3 URL
-     "-t", duration.to_s,            # Duration to extract
+     "-ss", start_sec.to_s,              # Seek before input 
+     "-i", input_source,                 # Input from file path or S3 URL
+     "-t", duration.to_s,                # Duration to extract
      
      # Video encoding settings for quality preservation
-     "-c:v", "libx264",              # H.264 codec
-     "-preset", "slow",              # Better compression (worth it for gaming footage)
-     "-crf", "18",                   # High quality (18 is visually lossless)
-     "-pix_fmt", "yuv420p",          # Compatibility
-     "-profile:v", "high",           # H.264 high profile
-     "-level", "4.1",                # Compatibility level
+     "-c:v", "libx264",                  # H.264 codec
+     "-preset", "slow",                  # Better compression (worth it for gaming footage)
+     "-crf", "18",                       # High quality (18 is visually lossless)
+     "-pix_fmt", "yuv420p",              # Compatibility
+     "-profile:v", "high",               # H.264 high profile
+     "-level", "4.1",                    # Compatibility level
      
      # Audio settings
-     "-c:a", "aac",                  # AAC audio
-     "-b:a", "320k",                 # High quality audio
-     "-ar", "48000",                 # Sample rate
+     "-c:a", "aac",                      # AAC audio
+     "-b:a", "320k",                     # High quality audio
+     "-ar", "48000",                     # Sample rate
      
      # Output optimization
-     "-movflags", "+faststart",      # Web optimization
-     "-max_muxing_queue_size", "9999", # Prevent packet loss
-     "-avoid_negative_ts", "make_zero", # Fix timestamp issues
+     "-movflags", "+faststart",          # Web optimization
+     "-max_muxing_queue_size", "9999",   # Prevent packet loss
+     "-avoid_negative_ts", "make_zero",  # Fix timestamp issues
      
      # Overwrite and suppress verbose output
-     "-y",                           # Overwrite output
-     "-loglevel", "warning",         # Only show warnings/errors
-     "-stats",                       # Show progress stats
+     "-y",                               # Overwrite output
+     "-loglevel", "warning",             # Only show warnings/errors
+     "-stats",                           # Show progress stats
      
      output_path
    ]
