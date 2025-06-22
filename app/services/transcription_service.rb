@@ -83,7 +83,10 @@ class TranscriptionService
       "-otxt",                                # Output text format
       "-oj",                                  # Output JSON format
       "-t", "4",                              # Use 4 CPU threads
-      "-ng"                                   # Force CPU only (no GPU) for fly.io
+      "-ng",                                   # Force CPU only (no GPU) for fly.io
+      "--no-timestamps",                       # Sometimes helps prevent repetition loops
+      "--max-len", "0",                        # Disable max length restrictions that can cause loops
+      "--word-thold", "0.01"                   # Lower word confidence threshold
     ]
   
     puts "RUNNING: #{cmd.join(' ')}"  # Log the command we're running
