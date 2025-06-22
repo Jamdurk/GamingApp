@@ -16,7 +16,6 @@ class ClipsController < ApplicationController
       @clip.end_time = timestamp_to_seconds(clips_params[:end_time])
     end
 
-
     if @clip.save
       # Enqueue the job that will call ClipGenerationService in the background
       ClipGenerationJob.perform_later(@clip.id)

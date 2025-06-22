@@ -201,7 +201,7 @@ test "processing_message returns correct messages/status" do
   
   # With transcript
   recording.create_transcript!(data: {test: "data"})
-  assert_equal "✅ Subtitled recording ready!", recording.processing_message
+  assert_equal "Subtitles are being burned into the video... please check back shortly.", recording.processing_message
 end
 
 test "should handle missing recording for show action" do
