@@ -15,7 +15,7 @@ class Recording < ApplicationRecord
 
     validates :title,     presence: true,  length: { maximum: 25 }, uniqueness: true
     validates :game_name, presence: true,  length: { maximum: 25 }
-    validates :players,   presence: true,  length: { maximum: 50 } # Right now players is a single attribute, and the model here is contraining. Will need to add player model at some point
+    validates :players,   presence: true,  length: { maximum: 50 } 
     validate :video_must_be_processable
     validates :video, size: { less_than: 5.gigabytes, message: 'must be less than 5GB. For larger files, please compress them first using Handbrake or similar tools.' }
 
