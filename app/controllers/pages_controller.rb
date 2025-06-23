@@ -11,6 +11,6 @@ class PagesController < ApplicationController
         0
       end
     end
-    @recent_recordings = Recording.order(created_at: :desc).limit(3)
+    @recent_recordings = Recording.order(created_at: :desc).limit(4)
   end
 end
