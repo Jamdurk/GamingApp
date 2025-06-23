@@ -16,9 +16,9 @@ class Recording < ApplicationRecord
     validates :title,     presence: true,  length: { maximum: 25 }, uniqueness: true
     validates :game_name, presence: true,  length: { maximum: 25 }
     validates :players,   presence: true,  length: { maximum: 50 } 
-    validate :video_must_be_processable
+    validate  :video_must_be_processable
     validates :video, size: { less_than: 5.gigabytes, message: 'must be less than 5GB. For larger files, please compress them first using Handbrake or similar tools.' }
-
+    validate  :no_potato_in_title
 
 
     def show_processing_section?
@@ -45,4 +45,18 @@ class Recording < ApplicationRecord
         video.analyze_later unless video.analyzed?
       end
     end
+
+    def no_potato_in_title
+      forbidden_words = ["potato", "potatos", "potato's", "Potato", "Potatos", "Potato's", "Potato's", 
+                         "POTATO", "POTATOS", "POTATO'S", "Baked Potato"]
+      forbidden_words.each do |word| 
+        if title.present? && title.include?(word)
+          errors.add(:title, "can't be potato....Are you stupid cunt? You and i both that the word potato has no place in a title,
+                            & the very idea of a potato in a title is just plain stupid & is an insult to genuinly everything.
+                            Prick.")
+          break
+        end
+      end
+    end
+
 end
