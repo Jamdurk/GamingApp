@@ -29,6 +29,7 @@
     <nav>
       <div class="container">
         <%= link_to "Home", root_path %>
+        <%= link_to "About", about_path %>
         <%= link_to "Recordings", recordings_path if defined?(recordings_path) %>
         <%= link_to "Submission", new_recording_path if defined?(new_recording_path) %>
       </div>
