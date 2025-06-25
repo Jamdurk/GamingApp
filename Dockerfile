@@ -36,10 +36,10 @@ RUN git clone https://github.com/ggerganov/whisper.cpp.git && \
     cmake -B build && \
     cmake --build build --config Release
 
-# Download the model (this will add 3GB to your image!)
+# Download the model (this will add 1.5GB to your image!)
 RUN mkdir -p whisper.cpp/models && \
-    curl -L "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v2.bin" \
-    -o whisper.cpp/models/ggml-large-v2.bin
+    curl -L "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.en.bin" \
+    -o whisper.cpp/models/ggml-medium.en.bin
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
