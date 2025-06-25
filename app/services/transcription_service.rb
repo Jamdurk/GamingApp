@@ -67,7 +67,7 @@ class TranscriptionService
     # Create unique filenames for this transcription job
     base_name = "whisper_#{Time.current.to_i}_#{Process.pid}"
     output_dir = "/tmp"
-    model_path = Rails.root.join("whisper.cpp", "models", "ggml-large-v2.bin").to_s
+    model_path = Rails.root.join("whisper.cpp", "models", "ggml-medium.en.bin").to_s
   
     # Make sure input file exists and is readable
     unless File.exist?(input_path) && File.readable?(input_path)
@@ -76,18 +76,16 @@ class TranscriptionService
   
     # Build Whisper.cpp command
     cmd = [
-      "./whisper.cpp/build/bin/whisper-cli",  # The Whisper executable
-      "-m", model_path,                       # AI model file path
-      "-f", input_path,                       # Input audio file
-      "-of", File.join(output_dir, base_name), # Output file prefix
-      "-otxt",                                # Output text format
-      "-oj",                                  # Output JSON format
-      "-t", "4",                              # Use 4 CPU threads
-      "-ng",                                   # Force CPU only (no GPU) for fly.io
-      "--no-timestamps",                       # Sometimes helps prevent repetition loops
-      "--max-len", "0",                        # Disable max length restrictions that can cause loops
-      "--word-thold", "0.01"                   # Lower word confidence threshold
+      "./whisper.cpp/build/bin/whisper-cli",
+      "-m", model_path,
+      "-f", input_path,
+      "-of", File.join(output_dir, base_name),
+      "-otxt",
+      "-oj",
+      "-t", "4",
+      "-ng"
     ]
+    
   
     puts "RUNNING: #{cmd.join(' ')}"  # Log the command we're running
 
