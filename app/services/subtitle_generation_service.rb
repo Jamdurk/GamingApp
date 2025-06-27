@@ -111,23 +111,41 @@ class SubtitleGenerationService
 
     # Build FFmpeg command
     cmd = [
-      "ffmpeg",        # The program
-      "-y",            # Overwrite output file without asking
-      "-i", input_path,  # Input video file
-      # Video filter: burn subtitles with white text, black outline
-      "-vf", "subtitles=#{srt_path}:force_style='FontName=Arial,FontSize=24,PrimaryColour=&Hffffff,OutlineColour=&H000000,Outline=2'",
-      "-c:v", "libx264",     # Use H.264 video codec
-      "-crf", crf.to_s,      # Compression level (lower = better quality)
-      "-preset", "medium",   # Encoding speed vs compression trade-off
-      "-profile:v", "high",  # H.264 profile for good compatibility
-      "-level", "4.0",       # H.264 level
-      "-threads", "12",      # Use 12 CPU threads for encoding
-      "-c:a", "aac",         # Use AAC audio codec
-      "-b:a", "96k",         # Audio bitrate (96 kbps)
-      "-movflags", "+faststart",  # Optimize for web streaming
-      "-max_muxing_queue_size", "4096",  # Prevent buffer overflow
-      "-pix_fmt", "yuv420p", # Pixel format for compatibility
-      output_path            # Output file
+      "ffmpeg",                    # The FFmpeg program itself
+      "-y",                        # Overwrite output file without asking (yes to all)
+      "-i", input_path,            # Input file path
+      
+      # Use filter_complex with exact timing control
+      "-filter_complex",           # Advanced filtering system (vs simple -vf)
+      "[0:v]subtitles=#{srt_path}:force_style='FontName=Arial,FontSize=24,PrimaryColour=&Hffffff,OutlineColour=&H000000,Outline=2'[v]",
+      # [0:v] = take video from input 0
+      # subtitles= burn in the SRT file
+      # force_style= override SRT styling with custom look
+      # FontName=Arial = use Arial font
+      # FontSize=24 = 24pt font size  
+      # PrimaryColour=&Hffffff = white text (&H prefix = hex color in BGR format)
+      # OutlineColour=&H000000 = black outline
+      # Outline=2 = 2 pixel thick outline
+      # [v] = output this filtered video as stream "v"
+      
+      "-map", "[v]",               # Use the filtered video stream "v" as output video
+      "-map", "0:a",               # Use original audio from input 0 (no filtering)
+      
+      "-c:v", "libx264",           # Video codec: H.264 (most compatible)
+      "-crf", crf.to_s,            # Constant Rate Factor: quality level (18=high, 28=medium, 35=low)
+      "-preset", "medium",         # Encoding speed vs compression efficiency (ultrafast→veryslow)
+      "-profile:v", "high",        # H.264 profile: high = best features/compression
+      "-level", "4.0",             # H.264 level: 4.0 = supports 1080p at reasonable bitrates
+      "-threads", "12",            # Use 12 CPU threads for encoding (faster on multi-core)
+      
+      "-c:a", "aac",               # Audio codec: AAC (widely supported)
+      "-b:a", "96k",               # Audio bitrate: 96 kilobits/sec (good quality, small size)
+      
+      "-movflags", "+faststart",   # Move metadata to start of file (web streaming friendly)
+      "-max_muxing_queue_size", "4096",  # Buffer size for A/V sync (prevents dropped frames)
+      "-pix_fmt", "yuv420p",       # Pixel format: 4:2:0 chroma subsampling (universal compatibility)
+      
+      output_path                  # Where to save the final video
     ]
 
     Rails.logger.debug "[SubtitleGeneration] Running FFmpeg:\n#{cmd.join(' ')}"
