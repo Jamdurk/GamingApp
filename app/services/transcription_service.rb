@@ -49,6 +49,8 @@ class TranscriptionService
       "-ar", "16000",   # Audio sample rate (16kHz - required by Whisper)
       "-ac", "1",       # Audio channels (1 = mono)
       "-f", "wav",      # Output format (WAV)
+      "-avoid_negative_ts", "make_zero",  # Handle timing issues
+      "-map", "0:a:0",                    # Explicitly map first audio stream
       wav_path          # Output file path
     ]
 
