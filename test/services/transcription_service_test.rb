@@ -47,7 +47,7 @@ class TranscriptionServiceTest < ActiveSupport::TestCase
     Process.stubs(:pid).returns(99999)
 
     expected_command = [
-      "ffmpeg", "-i", input_path, "-ar", "16000", "-ac", "1", "-f", "wav", wav_path
+      "ffmpeg", "-i", input_path, "-ar", "16000", "-ac", "1", "-f", "wav", "-avoid_negative_ts", "make_zero",  "-map", "0:a:0", wav_path
     ]
 
     Open3.expects(:capture3).with(*expected_command).returns(["", "", mock(success?: true)])
