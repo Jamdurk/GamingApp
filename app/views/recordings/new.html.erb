@@ -1,5 +1,5 @@
 <div class="recording-form-container">
-  <h1 class="recording-form-title"> Upload a New Recording</h1>
+  <h1 class="recording-form-title"> Upload a new recording!</h1>
   <% if @recording.errors.any? %>
   <div id="error_explanation">
     <h2><%= pluralize(@recording.errors.count, "error") %> prohibited this recording from being saved:</h2>
@@ -15,12 +15,12 @@
   <%= form_with model: @recording, local: true, html: { multipart: true } do |f| %>
     <div class="recording-form-group">
       <%= f.label :title, "Title", class: "recording-form-label" %>
-      <%= f.text_field :title, class: "recording-form-input", placeholder: "Enter recording title..." %>
+      <%= f.text_field :title, class: "recording-form-input", placeholder: "Enter title..." %>
     </div>
 
     <div class="recording-form-group">
       <%= f.label :game_name, "Game Name", class: "recording-form-label" %>
-      <%= f.text_field :game_name, class: "recording-form-input", placeholder: "What game did you play?" %>
+      <%= f.text_field :game_name, class: "recording-form-input", placeholder: "What did you play?" %>
     </div>
 
     <div class="recording-form-group">
