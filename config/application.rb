@@ -17,5 +17,7 @@ module GamingApp
     config.autoload_lib(ignore: %w[assets tasks])
 
     config.active_job.queue_adapter = :sidekiq
+
+    config.time_zone = "Sydney" # Set the default time zone to Sydney
   end
 end
