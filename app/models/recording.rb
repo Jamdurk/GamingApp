@@ -17,7 +17,7 @@ class Recording < ApplicationRecord
     validates :game_name, presence: true,  length: { maximum: 25 }
     validates :players,   presence: true,  length: { maximum: 50 } 
     validate  :video_must_be_processable
-    validates :video, size: { less_than: 5.gigabytes, message: 'must be less than 5GB. For larger files, please compress them first using Handbrake or similar tools.' }
+    validates :video, size:{ less_than: 5.gigabytes, message: 'must be less than 5GB. For larger files, please compress them first using Handbrake or similar tools.' }, if: -> { Rails.env.production? }
     validate  :no_potato_in_title
 
 
