@@ -24,9 +24,9 @@ class TranscriptionService
       Rails.logger.info "[TranscriptionService] WAV file created at #{wav_path}"
       
       # Step 2: Run Whisper AI to transcribe the audio
-      Rails.logger.info "[TranscriptionService] Running Whisper AI..."
+      Rails.logger.info "[TranscriptionService] Running Whisper AI at #{Time.current}..."
       json_path = run_whisper(wav_path)
-      Rails.logger.info "[TranscriptionService] Whisper AI completed. JSON file created at #{json_path}"
+      Rails.logger.info "[TranscriptionService] Whisper AI completed at #{Time.current}. JSON file created at #{json_path}"
       
       # Step 3: Parse the JSON results and save to database
       Rails.logger.info "[TranscriptionService] Parsing transcript..."
