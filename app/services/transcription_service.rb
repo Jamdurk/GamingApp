@@ -19,16 +19,24 @@ class TranscriptionService
     # Stream video directly from S3 - no local download needed!
     @recording.video.open do |video_tempfile|
       # Step 1: Convert video to WAV audio format
+      Rails.logger.info "[TranscriptionService] Converting video to WAV..."
       wav_path = convert_to_wav(video_tempfile.path)
+      Rails.logger.info "[TranscriptionService] WAV file created at #{wav_path}"
       
       # Step 2: Run Whisper AI to transcribe the audio
+      Rails.logger.info "[TranscriptionService] Running Whisper AI..."
       json_path = run_whisper(wav_path)
+      Rails.logger.info "[TranscriptionService] Whisper AI completed. JSON file created at #{json_path}"
       
       # Step 3: Parse the JSON results and save to database
+      Rails.logger.info "[TranscriptionService] Parsing transcript..."
       result = parse_transcript(json_path)
+      Rails.logger.info "[TranscriptionService] Transcript parsed and saved to database"
       
       # Step 4: Clean up all temporary files
+      Rails.logger.info "[TranscriptionService] Cleaning up temporary files..."
       cleanup_temp_files([video_tempfile.path, wav_path, json_path])
+      Rails.logger.info "[TranscriptionService] Temporary files cleaned up"
       
       result  # Return the transcript result
     end
