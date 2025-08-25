@@ -30,116 +30,25 @@ class ClipGenerationService
    return failure("Clip duration must be between 1 second and 5 minutes") if duration < 1 || duration > 300
 
    # Handle different storage services
-   if Rails.env.test? || @recording.video.service.name == :test
-     # In test environment, use local file path
+   output_path = temp_output_path
+   
+   if Rails.env.test? || [:test, :local].include?(@recording.video.service.name)
+     # For local/test, we need to open the file to get the path
      @recording.video.open do |file|
-       input_source = file.path
+       result = process_with_ffmpeg(file.path, start_sec, duration, output_path)
+       return result unless result.nil? # Return early if FFmpeg failed
        
-       # Create output path
-       output_path = temp_output_path
-
-       # Build FFmpeg command for high-quality clip extraction
-       cmd = build_ffmpeg_command(input_source, start_sec, duration, output_path)
-       
-       Rails.logger.info "[ClipGeneration] Starting FFmpeg for #{@recording.id} (#{start_sec}s - #{end_sec}s)"
-       
-       # Execute FFmpeg with timeout protection
-       stdout, stderr, status = nil
-       begin
-         Timeout::timeout(300) do  # 5 minute timeout for clip generation
-           stdout, stderr, status = Open3.capture3(*cmd)
-         end
-       rescue Timeout::Error
-         return failure("Clip generation timed out after 5 minutes")
-       end
-       
-       unless status&.success?
-         Rails.logger.error "[ClipGeneration] FFmpeg failed: #{stderr}"
-         return failure("Video processing failed: #{stderr&.lines&.last}")
-       end
-       
-       # Verify output file exists and has content
-       unless File.exist?(output_path) && File.size(output_path) > 0
-         return failure("Failed to generate clip file")
-       end
-       
-       # Create or update clip record
-       clip = @clip || @recording.clips.build
-       clip.assign_attributes(
-         title:      @title,
-         start_time: start_sec.to_i,
-         end_time:   end_sec.to_i
-       )
-       
-       # Attach the clip video
-       clip.video.attach(
-         io:           File.open(output_path, "rb"),
-         filename:     "#{@recording.title.parameterize}_clip_#{Time.current.to_i}.mp4",
-         content_type: "video/mp4"
-       )
-       
-       # Save and return result
-       if clip.save
-         Rails.logger.info "[ClipGeneration] Successfully created clip #{clip.id}"
-         return success(clip)
-       else
-         return failure(clip.errors.full_messages.join(", "))
-       end
+       # Create and save clip inside the file block
+       return create_and_save_clip(start_sec, end_sec, output_path)
      end
    else
-     # Production: use S3 URL
+     # For S3, use the URL directly
      input_source = @recording.video.url(expires_in: 7200)
+     result = process_with_ffmpeg(input_source, start_sec, duration, output_path)
+     return result unless result.nil? # Return early if FFmpeg failed
      
-     # Create output path
-     output_path = temp_output_path
-
-     # Build FFmpeg command for high-quality clip extraction
-     cmd = build_ffmpeg_command(input_source, start_sec, duration, output_path)
-     
-     Rails.logger.info "[ClipGeneration] Starting FFmpeg for #{@recording.id} (#{start_sec}s - #{end_sec}s)"
-     
-     # Execute FFmpeg with timeout protection
-     stdout, stderr, status = nil
-     begin
-       Timeout::timeout(300) do  # 5 minute timeout for clip generation
-         stdout, stderr, status = Open3.capture3(*cmd)
-       end
-     rescue Timeout::Error
-       return failure("Clip generation timed out after 5 minutes")
-     end
-     
-     unless status&.success?
-       Rails.logger.error "[ClipGeneration] FFmpeg failed: #{stderr}"
-       return failure("Video processing failed: #{stderr&.lines&.last}")
-     end
-     
-     # Verify output file exists and has content
-     unless File.exist?(output_path) && File.size(output_path) > 0
-       return failure("Failed to generate clip file")
-     end
-     
-     # Create or update clip record
-     clip = @clip || @recording.clips.build
-     clip.assign_attributes(
-       title:      @title,
-       start_time: start_sec.to_i,
-       end_time:   end_sec.to_i
-     )
-     
-     # Attach the clip video
-     clip.video.attach(
-       io:           File.open(output_path, "rb"),
-       filename:     "#{@recording.title.parameterize}_clip_#{Time.current.to_i}.mp4",
-       content_type: "video/mp4"
-     )
-     
-     # Save and return result
-     if clip.save
-       Rails.logger.info "[ClipGeneration] Successfully created clip #{clip.id}"
-       return success(clip)
-     else
-       return failure(clip.errors.full_messages.join(", "))
-     end
+     # Create and save clip
+     create_and_save_clip(start_sec, end_sec, output_path)
    end
    
  rescue StandardError => e
@@ -155,6 +64,60 @@ class ClipGenerationService
  end
 
  private
+
+ def process_with_ffmpeg(input_source, start_sec, duration, output_path)
+   # Build FFmpeg command for high-quality clip extraction
+   cmd = build_ffmpeg_command(input_source, start_sec, duration, output_path)
+   
+   Rails.logger.info "[ClipGeneration] Starting FFmpeg for #{@recording.id} (#{start_sec}s - #{start_sec + duration}s)"
+   
+   # Execute FFmpeg with timeout protection
+   stdout, stderr, status = nil
+   begin
+     Timeout::timeout(300) do  # 5 minute timeout for clip generation
+       stdout, stderr, status = Open3.capture3(*cmd)
+     end
+   rescue Timeout::Error
+     return failure("Clip generation timed out after 5 minutes")
+   end
+   
+   unless status&.success?
+     Rails.logger.error "[ClipGeneration] FFmpeg failed: #{stderr}"
+     return failure("Video processing failed: #{stderr&.lines&.last}")
+   end
+   
+   # Verify output file exists and has content
+   unless File.exist?(output_path) && File.size(output_path) > 0
+     return failure("Failed to generate clip file")
+   end
+   
+   nil # Success - continue processing
+ end
+
+ def create_and_save_clip(start_sec, end_sec, output_path)
+   # Create or update clip record
+   clip = @clip || @recording.clips.build
+   clip.assign_attributes(
+     title:      @title,
+     start_time: start_sec.to_i,
+     end_time:   end_sec.to_i
+   )
+   
+   # Attach the clip video
+   clip.video.attach(
+     io:           File.open(output_path, "rb"),
+     filename:     "#{@recording.title.parameterize}_clip_#{Time.current.to_i}.mp4",
+     content_type: "video/mp4"
+   )
+   
+   # Save and return result
+   if clip.save
+     Rails.logger.info "[ClipGeneration] Successfully created clip #{clip.id}"
+     return success(clip)
+   else
+     return failure(clip.errors.full_messages.join(", "))
+   end
+ end
 
  def build_ffmpeg_command(input_source, start_sec, duration, output_path)
    [

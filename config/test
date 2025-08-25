@@ -1,0 +1,19 @@
+if test_environment?
+    # For local/test, we need to open the file to get the path
+    @recording.video.open do |file|
+      result = process_with_ffmpeg(file.path, start_sec, duration, output_path)
+      return result unless result.nil? # Return early if FFmpeg failed
+      
+      # Create and save clip inside the file block
+      return create_and_save_clip(start_sec, end_sec, output_path)
+    end
+  else
+    # For S3, use the URL directly
+    input_source = @recording.video.url(expires_in: 7200)
+    result = process_with_ffmpeg(input_source, start_sec, duration, output_path)
+    return result unless result.nil? # Return early if FFmpeg failed
+    
+    # Create and save clip
+    create_and_save_clip(start_sec, end_sec, output_path)
+  end
+end
